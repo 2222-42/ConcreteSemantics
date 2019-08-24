@@ -56,6 +56,83 @@ fun bsimp :: "bexp \<Rightarrow> bexp" where
 "bsimp (Less a1 a2) = less (asimp a1) (asimp a2)"
 
 fun Eq :: "aexp \<Rightarrow> aexp \<Rightarrow> bexp" where
-"Eq (N n1) (N n2) = Not(Bc(n1 < n2)) \<and>  Not(Bc(n2 < n1))"
+"Eq a b = And (Not(Less a b))  (Not(Less b a))"
+
+fun Le :: "aexp \<Rightarrow> aexp \<Rightarrow> bexp" where
+"Le a b = Not (And (Not (Less a b))  (Not(Eq a b)))"
+
+lemma "bval (Eq a1 a2) s = (aval a1 s = aval a2 s)"
+  apply(auto)
+  done
+
+lemma "bval (Le a1 a2) s = (aval a1 s \<le> aval a2 s)"
+  apply(auto)
+  done
+
+datatype ifexp = Bc2 bool | If ifexp ifexp ifexp | Less2 aexp aexp
+
+fun ifval :: "ifexp \<Rightarrow> state \<Rightarrow> bool" where
+"ifval (Bc2 v) s = v" |
+"ifval (If a b c) s = (if (ifval a s) then (ifval b s) else (ifval c s))" |
+"ifval (Less2 a1 a2) s = (aval a1 s < aval a2 s)"
+
+fun b2ifexp :: "bexp \<Rightarrow> ifexp" where
+"b2ifexp (Bc v) = Bc2 v" |
+"b2ifexp (Not b) = If (b2ifexp b) (Bc2 False) (Bc2 True)" |
+"b2ifexp (And b1 b2) = If (b2ifexp b1)  (b2ifexp  b2) (Bc2 False)" |
+"b2ifexp (Less a1 a2) = Less2  a1 a2"
+
+fun if2bexp :: "ifexp \<Rightarrow> bexp" where
+"if2bexp (Bc2 v) = Bc v" |
+"if2bexp (Less2 a b) = Less a b" |
+"if2bexp (If a b c) = And (Not (And (if2bexp a) (Not (if2bexp b))))(Not (And (Not (if2bexp a)) (Not (if2bexp c))))"
+
+lemma "bval b s = ifval (b2ifexp b) s"
+  apply(induction b)
+  apply(auto)
+  done
+
+lemma "ifval i s = bval (if2bexp i) s"
+  apply(induction i)
+  apply(auto)
+  done
+
+datatype pbexp = VAR vname | NOT pbexp | AND pbexp pbexp | OR pbexp pbexp
+
+fun pbval :: "pbexp \<Rightarrow> (vname \<Rightarrow> bool) \<Rightarrow> bool" where
+"pbval (VAR x ) s = s x" |
+"pbval (NOT b) s = (\<not> pbval b s)" |
+"pbval (AND b1 b2) s = (pbval b1 s \<and> pbval b2 s)" |
+"pbval (OR b1 b2) s = (pbval b1 s \<or> pbval b2 s)"
+
+fun is_nnf :: "pbexp \<Rightarrow> bool" where
+"is_nnf (VAR x) = True" |
+"is_nnf (NOT (VAR x)) = True" |
+"is_nnf (NOT y) = False" |
+"is_nnf (OR a b) = (is_nnf a \<and> is_nnf b)" |
+"is_nnf (AND a b) = (is_nnf a \<and> is_nnf b)"
+
+(* pushing NOT inwards as much as possible *)
+fun nnf :: "pbexp \<Rightarrow> pbexp" where
+"nnf (VAR x) = VAR x" |
+"nnf (NOT (VAR x)) = NOT (VAR x)" |
+"nnf (NOT (NOT a)) = nnf a" |
+"nnf (NOT (OR  a b)) = AND (nnf (NOT a)) (nnf (NOT b))" |
+"nnf (NOT (AND  a b)) = OR (nnf (NOT a)) (nnf (NOT b))" |
+"nnf (AND  a  b) = AND (nnf a) (nnf b)" |
+"nnf (OR  a  b) = OR (nnf a) (nnf b)"
+
+lemma nnf_preserv : "pbval (nnf b) s = pbval b s"
+  apply(induction b rule: nnf.induct)
+  apply(auto)
+  done
+
+fun is_dnf :: "pbexp \<Rightarrow> bool" where
+"is_dnf (VAR x) = True"|
+"is_dnf (NOT (VAR x)) = True" |
+"is_dnf (NOT y) = (is_dnf y)" |
+"is_dnf (OR a b) = False" |
+"is_dnf (AND a b) = (is_dnf a \<and> is_dnf b)"
+
 
 end
