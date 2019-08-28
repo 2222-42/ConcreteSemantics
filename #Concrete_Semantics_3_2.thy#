@@ -10,10 +10,10 @@ type_synonym state = "vname \<Rightarrow> val"
 fun aval :: "aexp \<Rightarrow> state \<Rightarrow> val" where
 "aval (N n) s = n" |
 "aval (V x) s = s x" |
-"aval (Plus a b) s = aval a s + aval b s"
+"aval (Plus a b) s = aval a s + aval b s" 
 
 fun plus :: "aexp \<Rightarrow> aexp \<Rightarrow> aexp" where
-"plus (N i1) (N i2) = N(i1+i2)" |
+"plus (N i1) (N i2) = N(i1+i2)" |                       
 "plus (N i) a = (if i=0 then a else Plus (N i) a)" |
 "plus a (N i) = (if i=0 then a else Plus a (N i))" |
 "plus a1 a2 = Plus a1 a2"
@@ -134,7 +134,7 @@ fun is_dnf :: "pbexp \<Rightarrow> bool" where
 "is_dnf (AND (OR a b) c) = False" | 
 "is_dnf (AND a (OR b c)) = False" |
 "is_dnf (AND a b) =  (is_dnf a \<and> is_dnf b)"
-
+                                        
 fun mk_dnf_conj :: "pbexp \<Rightarrow> pbexp \<Rightarrow> pbexp" where
 "mk_dnf_conj e (OR a b) = OR (mk_dnf_conj e a) (mk_dnf_conj e b)" |
 "mk_dnf_conj (OR a b) e  = OR (mk_dnf_conj a e) (mk_dnf_conj b e)" |
