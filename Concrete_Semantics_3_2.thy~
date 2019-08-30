@@ -1,11 +1,11 @@
 theory Concrete_Semantics_3_2
   imports Main
-begin
-(* from 3.1 *)
+begin 
+(* from 3.1 *) 
 type_synonym vname = string
 datatype aexp = N int | V vname | Plus aexp aexp
 type_synonym val = int
-type_synonym state = "vname \<Rightarrow> val"
+type_synonym state = "vname \<Rightarrow> val" 
 
 fun aval :: "aexp \<Rightarrow> state \<Rightarrow> val" where
 "aval (N n) s = n" |
@@ -99,7 +99,7 @@ lemma "ifval i s = bval (if2bexp i) s"
 
 datatype pbexp = VAR vname | NOT pbexp | AND pbexp pbexp | OR pbexp pbexp
 
-fun pbval :: "pbexp \<Rightarrow> (vname \<Rightarrow> bool) \<Rightarrow> bool" where
+fun pbval :: "pbexp \<Rightarrow> (vname \<Rightarrow> bool) \<Rightarrow> bool" where     
 "pbval (VAR x ) s = s x" |
 "pbval (NOT b) s = (\<not> pbval b s)" |
 "pbval (AND b1 b2) s = (pbval b1 s \<and> pbval b2 s)" |
@@ -121,18 +121,63 @@ fun nnf :: "pbexp \<Rightarrow> pbexp" where
 "nnf (NOT (AND  a b)) = OR (nnf (NOT a)) (nnf (NOT b))" |
 "nnf (AND  a  b) = AND (nnf a) (nnf b)" |
 "nnf (OR  a  b) = OR (nnf a) (nnf b)"
-
+                                      
 lemma nnf_preserv : "pbval (nnf b) s = pbval b s"
-  apply(induction b rule: nnf.induct)
+  apply(induction b rule: nnf.induct)                  
+  apply(auto)                                 
+  done                                           
+
+fun is_dnf :: "pbexp \<Rightarrow> bool" where
+"is_dnf (VAR x) = True"|  
+"is_dnf (NOT y) = True" |
+"is_dnf (OR a b) = (is_dnf a \<and> is_dnf b)" |
+"is_dnf (AND (OR a b) c) = False" | 
+"is_dnf (AND a (OR b c)) = False" |
+"is_dnf (AND a b) =  (is_dnf a \<and> is_dnf b)"
+
+fun mk_dnf_conj :: "pbexp \<Rightarrow> pbexp \<Rightarrow> pbexp" where
+"mk_dnf_conj e (OR a b) = OR (mk_dnf_conj e a) (mk_dnf_conj e b)" |
+"mk_dnf_conj (OR a b) e  = OR (mk_dnf_conj a e) (mk_dnf_conj b e)" |
+"mk_dnf_conj x  y  = AND x y"
+             
+lemma mk_dnf_preserv : "pbval (mk_dnf_conj a b) s = (pbval a s \<and> pbval b s)"
+  apply(induction a b rule: mk_dnf_conj.induct)
   apply(auto)
   done
 
-fun is_dnf :: "pbexp \<Rightarrow> bool" where
-"is_dnf (VAR x) = True"|
-"is_dnf (NOT (VAR x)) = True" |
-"is_dnf (NOT y) = (is_dnf y)" |
-"is_dnf (OR a b) = False" |
-"is_dnf (AND a b) = (is_dnf a \<and> is_dnf b)"
+
+lemma mk_dnf_is_nnf: "is_nnf a \<Longrightarrow>
+           is_nnf b \<Longrightarrow>
+           is_nnf (mk_dnf_conj  a  b)"
+  apply(induction a b rule:  mk_dnf_conj.induct)
+  apply(auto)
+  done 
 
 
-end
+(* many counter examples occurs this way, TODO: make function for 'AND' *)
+                                        
+fun dnf_of_nnf :: "pbexp \<Rightarrow> pbexp" where            
+"dnf_of_nnf (VAR x) = VAR x" |
+"dnf_of_nnf (NOT y) = NOT y" |
+"dnf_of_nnf (OR a b) = OR (dnf_of_nnf a) (dnf_of_nnf b)" |                                                       
+"dnf_of_nnf (AND a b) =  mk_dnf_conj (dnf_of_nnf a) (dnf_of_nnf b)"                                                  
+                                                  
+lemma "pbval (dnf_of_nnf b) s = pbval b s"
+  apply(induction b rule: dnf_of_nnf.induct )      
+  apply(simp_all add: mk_dnf_preserv)                                           
+  done                                             
+                               
+value "is_dnf(dnf_of_nnf(AND (OR (VAR []) (VAR [])) (OR (VAR []) (VAR []))))"
+
+lemma mk_dnf_is_dnf: "is_dnf a \<Longrightarrow>
+           is_dnf b \<Longrightarrow>
+           is_dnf (mk_dnf_conj  a  b)"
+  apply(induction a b rule:  mk_dnf_conj.induct)
+  apply(auto)
+  done 
+                                  
+lemma "is_nnf b \<Longrightarrow> is_dnf (dnf_of_nnf b)"     
+  apply(induction b rule: dnf_of_nnf.induct)
+  apply(auto simp add:  mk_dnf_is_dnf)                                                                                
+  done                                      
+end                                                    
