@@ -2,6 +2,21 @@ theory Prog_Prove_2_3
   imports Main
 begin
 
+fun reverse :: "'a list \<Rightarrow> 'a list" where
+"reverse [] = []" |
+"reverse (x # xs) = (reverse xs) @ [x]"
+
+lemma rev_distributes_over_app: "reverse (xs @ ys) = (reverse ys) @ (reverse xs)"
+apply(induction xs)
+apply(auto)
+done
+
+lemma rev_undos_self: "reverse (reverse xs) = xs"
+apply(induction xs)
+apply(auto)
+apply(simp add: rev_distributes_over_app)
+done
+
 datatype 'a tree = Tip | Node "'a tree" 'a "'a tree"
 
 fun mirror :: "'a tree \<Rightarrow> 'a tree" where
