@@ -41,4 +41,18 @@ fun lookup :: "('a * 'b) list => 'a => 'b option" where
 definition sq :: "nat => nat" where
 "sq n = n * n"
 
+(* 2.3.3 *)
+(* Abbreviations are similar to definitions *)
+
+abbreviation sq' :: "nat => nat" where
+"sq' n \<equiv> n * n"
+(* The key difference is that sq' is only syntactic sugar: after parsing, sq' t is
+replaced by t * t; before printing, every occurrence of u * u is replaced by
+sq' u. Internally, sq' does not exist. *)
+
+(* definitions need to be expanded explicitly (Section 2.5.5)
+whereas abbreviations are already expanded upon parsing *)
+
+(* abbreviations should be introduced sparingly *)
+
 end
