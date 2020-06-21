@@ -55,4 +55,32 @@ whereas abbreviations are already expanded upon parsing *)
 
 (* abbreviations should be introduced sparingly *)
 
+(* 2.3.4 *)
+(* Recursive functions are defined with fun by pattern matching over datatype constructors *)
+(* all HOL functions must be total *)
+(* Isabelle’s automatic termination checker requires that the arguments of
+recursive calls on the right-hand side must be strictly smaller than the arguments
+on the left-hand side *)
+
+fun div2:: "nat => nat" where
+"div2 0 = 0" |
+"div2 (Suc 0) = 0" |
+"div2 (Suc (Suc n)) = Suc (div2 n)"
+
+(* The recursive function defined with fun does not define the function but also proves a customized indution rule.
+This customized induction rule can simplify induction proofs.
+*)
+
+lemma "div2(n) = n div 2"
+apply(induction n rule: div2.induct)
+apply(auto)
+done
+
+(*
+induction heuristic:
+Let f be a recursive function. If the definition of f is more complicated
+than having one equation for each constructor of some datatype, then
+properties of f are best proved via f.induct.
+*)
+
 end
