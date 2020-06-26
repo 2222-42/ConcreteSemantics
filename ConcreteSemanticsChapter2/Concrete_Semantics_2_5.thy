@@ -58,4 +58,34 @@ Remarks on Simplification:
 side of the conclusion. It leads nontermination when to meet preconditions needs to meet the conclusions.
 *)
 
+(* 2.5.4 *)
+
+(* Method `simp` is the key component of `auto`, but `auto` can do much more. *)
+
+(* 
+  apply(simp add: th_1 ... th_n) 
+
+- all simplification rules, including the ones coming from datatype and fun,
+- the additional lemmas th_1 ... th_n
+- the assumptions
+*)
+
+(* 
+`del` for removing simplification rules temporarily
+*)
+
+(* Method auto can be modified similarly: 
+  apply(auto simp add: ... simp del: ...)
+
+Here the modifiers are `simp add` and `simp del` instead of just `add` and `del`
+because `auto` does not just perform simplification
+*)
+
+(* 
+Notes:
+- `simp` acts only on subgoal 1, 
+- `auto` acts on all subgoals. 
+- `simp_all` applies `simp` to all subgoals.
+*)
+
 end
