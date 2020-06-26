@@ -46,4 +46,16 @@ Simplification rules can be conditional.
 Before applying such a rule, the simplifier will first try to prove the preconditions, again by simplification.
 *)
 
+(* 2.5.3 *)
+
+(* Simplification can run forever, *)
+(* It is the user’s responsibility not to include simplification rules that can lead to nontermination *)
+
+(*
+Remarks on Simplification:
+- The right-hand side of a simplification rule should always be “simpler” than the left-hand side — in some sense.
+  - In conditional simplification, all preconditions need to be simpler than the left-hand
+side of the conclusion. It leads nontermination when to meet preconditions needs to meet the conclusions.
+*)
+
 end
