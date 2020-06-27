@@ -58,6 +58,7 @@ Remarks on Simplification:
 side of the conclusion. It leads nontermination when to meet preconditions needs to meet the conclusions.
 *)
 
+
 (* 2.5.4 *)
 
 (* Method `simp` is the key component of `auto`, but `auto` can do much more. *)
@@ -86,6 +87,29 @@ Notes:
 - `simp` acts only on subgoal 1, 
 - `auto` acts on all subgoals. 
 - `simp_all` applies `simp` to all subgoals.
+*)
+
+
+(* 2.5.5 *)
+
+(* Definitions introduced by the command definition can also be used as simplification rules, 
+but by default they are not
+The definition of a function `f` is a theorem named `f_def` and can be added
+to a call of `simp` like any other theorem:
+  apply(simp add: f_def )
+*)
+
+(* Definitions are intended for introducing abstract concepts and not merely as abbreviations *)
+
+
+(* 2.5.6 *)
+
+(* 
+We can split case-expressions similarly. Let `nat` be the rule which is case-splitting. 
+Case expressions are not split automatically by `simp`, but `simp` can be instructed to do so:
+  apply(simp split: nat.split)
+
+For an arbitrary datatype t it is t.split
 *)
 
 end
