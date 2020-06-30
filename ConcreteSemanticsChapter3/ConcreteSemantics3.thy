@@ -119,4 +119,148 @@ apply(auto split: aexp.split)
 (* sledgehammer *)
 by (simp add: aval_plus)
 
+subsubsection "3_1_Exercise"
+
+(* Exercise 3.1 *)
+
+(* checks that its argument does not contain a subexpression of the form Plus (N i) (N j ). *)
+fun optimal :: "aexp => bool" where
+"optimal (N n) = True" |
+"optimal (V x) = True" |
+"optimal (Plus (N i) (N j)) = False" |
+"optimal (Plus a b) = ((optimal a) \<and> (optimal b))"
+
+lemma "optimal (asimp_const a)"
+apply(induction a)
+apply(auto split: aexp.split)
+done
+
+(* Exercise 3.2 *)
+
+(* datatype classedAexp = Natural aexp | OnlyVariables aexp | Operation aexp aexp *)
+(* From the following definitions, I produce the unexpected cases in the below convertClassedAexpToAexp.
+To exclude OnlyVariables and Operation from `Natural {hoge}`.
+ *)
+
+ datatype classedAexp = Natural int | OnlyVariables aexp | Operation aexp int
+
+(* to set (N n) at the latest of the formula *)
+fun convertClassedAexpToAexp :: "classedAexp => aexp" where
+"convertClassedAexpToAexp (Natural n) = N n" |
+"convertClassedAexpToAexp (OnlyVariables x) = x" |
+"convertClassedAexpToAexp (Operation e1 n) = Plus e1 (N n)"
+
+fun fullPlusNatural :: "int => classedAexp => classedAexp" where
+"fullPlusNatural n cexp = 
+ (if n = 0
+  then cexp
+  else case cexp of
+    Natural m => Natural (n + m) |
+    OnlyVariables e => Operation e n |
+    Operation e1 m => Operation e1 (n + m)
+  )"
+    (* 
+    In order to prove lemma aval_fullPlusNatural
+    To exclude some of V cases from `OnlyVariables {hoge}`
+    OnlyVariables (V x) => Operation (V x) n | *)
+
+fun full_asimp2 :: "aexp => classedAexp" where
+"full_asimp2 (N n) = Natural n" |
+"full_asimp2 (V x) = OnlyVariables (V x)" |
+"full_asimp2 (Plus a b) = 
+    (case (full_asimp2 a, full_asimp2 b) of
+        (Natural n, e) => fullPlusNatural n e |
+        (e, Natural m) => fullPlusNatural m e |
+        (OnlyVariables x, OnlyVariables y) => OnlyVariables (Plus x y) |
+        (OnlyVariables x, (Operation e2 n)) => Operation (Plus x e2) n |
+        ((Operation e1 n), OnlyVariables y) => Operation (Plus e1 y) n |
+        ((Operation e1 n), (Operation e2 m)) => Operation (Plus e1 e2) (n + m) 
+    )"
+
+fun full_asimp1 :: "aexp => aexp" where
+"full_asimp1 exp = convertClassedAexpToAexp (full_asimp2 exp)"
+
+lemma aval_fullPlusNatural: "aval (convertClassedAexpToAexp(fullPlusNatural n e)) s = n + (aval (convertClassedAexpToAexp e) s)"
+apply(induction e)
+apply(auto split: classedAexp.split)
+done
+
+lemma "aval (full_asimp1 e) s = aval e s"
+(* apply(induction rule: full_asimp1.induct) *)
+apply(induction e)
+apply(auto split: classedAexp.split)
+done
+
+(* From the following stash, I implement the above the classified datatype*)
+(* The following texts are stash. It produces only insane subgols *)
+(* to set (N n) at the latest of the formula *)
+(* fun fullPlusNatural :: "int => aexp => aexp" where
+"fullPlusNatural n e = 
+ (if n = 0
+  then e
+  else case e of
+    N m => N (n + m) |
+    V x => Plus (V x) (N n) |
+    Plus (V x) (V y) => Plus (Plus (V x) (V y)) (N n) |
+    Plus e1 (N m) => Plus e1 (N (n + m)) |
+    Plus e1 e2 => Plus (Plus e1 e2) (N n)
+  )"
+
+value "fullPlusNatural 3 (Plus (N 2) (V x))"
+
+
+fun full_asimp2 :: "aexp => aexp" where
+"full_asimp2 (N n) = N n" |
+"full_asimp2 (V x) = V x" |
+"full_asimp2 (Plus a b) = 
+    (case (full_asimp2 a, full_asimp2 b) of
+        (N n, e) => fullPlusNatural n e |
+        (e, N m) => fullPlusNatural m e |
+        (V x, V y) => Plus (V x) (V y)|
+        (V x, (Plus e2 (N n))) => Plus (Plus (V x) e2) (N n)|
+        ((Plus e1 (N n)), V y) => Plus (Plus e1 (V y)) (N n) |
+        ((Plus e1 (N n)), (Plus e2 (N m))) => Plus (Plus e1 e2) (N(n + m)) |
+        (e1, Plus e2 (V y)) => Plus (V y) (Plus e1 e2)|
+        (e1, Plus (V x) e2) => Plus (V x) (Plus e1 e2) |
+        (Plus e2 (V y), e1) => Plus (V y) (Plus e1 e2)|
+        (Plus (V x) e2, e1) => Plus (V x) (Plus e1 e2) 
+    )" *)
+(* Critical Problem is the following only contains variables:
+e.g., Plus (V x) (Plus (V z) (V y)) *)
+(* value "full_asimp2 (Plus (V x) (Plus (V z) (V y)))"
+value "full_asimp2 (Plus (Plus (V z) (V y)) (V x) ) "
+
+value "full_asimp2 (Plus(N 1) (Plus (V x ) (N 2)))"
+value "full_asimp2 (Plus (N 1) (N 2))"
+value "full_asimp2 (Plus (N 1) (Plus (V x) (N 2)))"
+value "full_asimp2 (Plus (N 2) (Plus (V y) (V x)))"
+(* "fullPlusNatural 2 (Plus (V y) (V x))" *)
+(*  *)
+
+
+value "full_asimp2 (Plus (V y) (Plus (V x) (N 2)))"
+value "full_asimp2 (Plus (Plus(N 3)(V y)) (Plus (V x) (N 2)))"
+value "full_asimp2 (Plus (N 3) (Plus (Plus (V x) (Plus (V y) (N 2) )) (V z)))"
+value "full_asimp2 (Plus (N 1) (Plus (Plus (N 2) (V x)) (V y)))"
+
+value "full_asimp2 (Plus (N 1) (Plus (Plus (V y) (V x)) (N 2)))"
+(* value "full_asimp2 (Plus (N 1) (Plus (Plus (Plus (V x) (V y)) (N 3)) (N 2)))" *)
+(* "fullPlusNatural 1 (fullPlusNatural 2 (Plus (V y) (V x)))" *)
+value "full_asimp2 (Plus (Plus (Plus (V y) (V x)) (N 2)) (N 1))"
+(* "full_asimp2 (Plus (Plus (Plus (V y) (V x)) (N 2)) (N 1))" *)
+ *)
+
+(* lemma aval_fullPlusNatural: "aval (fullPlusNatural n e) s = n + (aval e s)"
+apply(induction rule: fullPlusNatural.induct)
+sledgehammer *)
+
+ (* 2. 
+
+       aval x31 s + s x2 = aval a s \<Longrightarrow>
+       s x2a = aval b s \<Longrightarrow>
+       full_asimp2 b = V x2a \<Longrightarrow>
+       full_asimp2 a = Plus x31 (V x2) \<Longrightarrow> aval undefined s = aval a s + aval b s
+
+ *)
+
 end
