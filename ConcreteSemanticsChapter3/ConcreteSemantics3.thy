@@ -144,6 +144,10 @@ To exclude OnlyVariables and Operation from `Natural {hoge}`.
 
  datatype classedAexp = Natural int | OnlyVariables aexp | Operation aexp int
 
+(* Fundamental View: 
+- collect (N n) to separate from (V x) 
+- Set it is not needed to change the fomula in the Plus A B when A and B are consists of Variables
+*)
 (* to set (N n) at the latest of the formula *)
 fun convertClassedAexpToAexp :: "classedAexp => aexp" where
 "convertClassedAexpToAexp (Natural n) = N n" |
@@ -262,5 +266,23 @@ sledgehammer *)
        full_asimp2 a = Plus x31 (V x2) \<Longrightarrow> aval undefined s = aval a s + aval b s
 
  *)
+
+
+fun subst :: "vname => aexp => aexp => aexp" where
+"subst x a (N n) = N n" |
+"subst x a (V y) = (if (x = y) then a else (V y))" |
+"subst x a (Plus e1 e2) = Plus (subst x a e1) (subst x a e2)"
+
+value "subst ''x'' (N 3) (Plus (V ''x'') (V ''y'')) = Plus (N 3) (V ''y'')"
+
+lemma substitution_lemma: "aval (subst x a e) s = aval e (s (x := aval a s))"
+apply(induction e)
+apply(auto)
+done
+
+lemma aval_uniq: "aval a1 s = aval a2 s ==> aval (subst x a1 e) s = aval (subst x a2 e) s "
+apply(induction e)
+apply(auto)
+done
 
 end
