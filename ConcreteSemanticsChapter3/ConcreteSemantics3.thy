@@ -285,4 +285,67 @@ apply(induction e)
 apply(auto)
 done
 
+datatype aexp2 = N int | V vname | Plus aexp2 aexp2 | PIncr vname | Division aexp2 aexp2
+
+fun get_first :: "val \<times> state \<Rightarrow> val" where
+"get_first (a, s) = a"
+
+fun get_first_withOption :: "(val \<times> state)option \<Rightarrow> val option" where
+"get_first_withOption None = None" |
+"get_first_withOption (Some x) = Some(get_first(x))"
+
+fun get_last :: "val \<times> state \<Rightarrow> state" where
+"get_last (a, s) = s"
+
+fun operationPlusWithNone :: "(val \<times> state) option => (val \<times> state) option => (val \<times> state) option" where
+"operationPlusWithNone a None = None" |
+"operationPlusWithNone None b = None" |
+"operationPlusWithNone (Some x) (Some y) = Some (get_first(x) + get_first(y), get_last(y))"
+
+fun operationDivWithNone :: "(val \<times> state) option => (val \<times> state) option => (val \<times> state) option" where
+"operationDivWithNone a None = None" |
+"operationDivWithNone None b = None" |
+"operationDivWithNone (Some x) (Some y) = Some (get_first(x) div get_first(y), get_last(y))"
+(* 
+
+fun aval2 :: "aexp2 => state => (val \<times> state) option" where
+"aval2 (N n) s = (n, s)" |
+"aval2 (V x) s = (s x, s)" |
+"aval2 (PIncr x) s = (s x, s(x := (s x + 1)))" |
+"aval2 (Plus a b) s = ((get_first(aval2 a s) + get_first(aval2 b s)), get_last(aval2 b s)) "
+
+
+    (* (if (aval2 a s) = None then (if (aval2 b s) = None then None else get_first())) *)
+*)
+fun aval2 :: "aexp2 => state => (val \<times> state) option" where
+"aval2 (N n) s = Some(n, s)" |
+"aval2 (V x) s = Some(s x, s)" |
+"aval2 (PIncr x) s = Some(s x, s(x := (s x + 1)))" |
+"aval2 (Plus a b) s = operationPlusWithNone (aval2 a s) (aval2 b s)" |
+"aval2 (Division a b) s = (if (get_first_withOption(aval2 b s) = Some(0)) then None else (operationDivWithNone (aval2 a s) (aval2 b s)))"
+(* 
+Type unification failed: Clash of types "_ option" and "_ \<times> _"
+
+Type error in application: incompatible operand type
+
+Operator:  get_first :: int \<times> (char list \<Rightarrow> int) \<Rightarrow> int
+Operand:   aval2 a s :: (int \<times> (char list \<Rightarrow> int)) option
+*)
+
+value "aval2 (N 2) (\<lambda> x. 1)"
+value "aval2
+  (Plus
+    (N 2) (N 1))
+   (\<lambda> x. 1)"
+
+value "aval2
+  (Plus
+    (PIncr ''x'')
+    (Plus
+      (PIncr ''x'')
+      (Division
+        (PIncr ''x'')
+        (N 2))))
+  (\<lambda> x. 2)"
+
 end
