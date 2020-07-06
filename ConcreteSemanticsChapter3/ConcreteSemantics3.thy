@@ -487,4 +487,38 @@ lemma "bval (Le a1 a2) s = (aval a1 s \<le> aval a2 s)"
 apply(auto)
 done
 
+(* Exercise 3.8. *)
+
+(* an alternative type of boolean expressions *)
+
+datatype ifexp = Bc2 bool | If ifexp ifexp ifexp | Less2 aexp aexp
+
+(* First define an evaluation function *)
+fun ifval :: "ifexp => state => bool" where
+"ifval (Bc2 v) s = v" |
+"ifval (If i1 i2 i3) s = (if (ifval i1 s) then (ifval i2 s) else (ifval i3 s))" |
+"ifval (Less2 a1 a2) s = (aval a1 s < aval a2 s)"
+
+(* A \land B \equiv A \supset B /\ \neg A \supset \bottom *)
+fun b2ifexp :: "bexp => ifexp" where
+"b2ifexp (Bc v) = Bc2 v" |
+"b2ifexp (Not b) = (If (b2ifexp b) (Bc2 False) (Bc2 True))" |
+"b2ifexp (And b1 b2) = (If (b2ifexp b1) (b2ifexp b2) (Bc2 False) )" |
+"b2ifexp (Less a1 a2) = Less2 a1 a2" 
+
+fun if2bexp :: "ifexp => bexp" where
+"if2bexp (Bc2 v) = Bc v" |
+"if2bexp (If i1 i2 i3) = And (Not (And (if2bexp i1) (Not (if2bexp i2)))) (Not (And (Not (if2bexp i1)) (Not (if2bexp i3))))" |
+"if2bexp (Less2 a1 a2) = Less a1 a2"
+
+lemma "bval b s = ifval (b2ifexp b) s"
+apply(induction b)
+apply(auto)
+done
+
+lemma "ifval b s = bval (if2bexp b) s"
+apply(induction b)
+apply(auto)
+done
+
 end
