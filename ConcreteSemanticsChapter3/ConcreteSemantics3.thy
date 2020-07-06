@@ -45,6 +45,7 @@ fun aval :: "aexp => state => val" where
 "aval (Plus a1 a2) s = aval a1 s + aval a2 s"
 
 value "aval (Plus (N 3) (V ''x'')) (\<lambda>x.0)"
+value "aval (Plus (N 3) (V ''x''))((\<lambda>x.  0) (''x'' := 7)) "
 
 (* 
 the generic function update notation f (a := b) is used: 
@@ -285,7 +286,8 @@ apply(induction e)
 apply(auto)
 done
 
-datatype aexp2 = N int | V vname | Plus aexp2 aexp2 | PIncr vname | Division aexp2 aexp2
+(* Exercise 3.5. *)
+datatype aexp2 = N2 int | V2 vname | Plus2 aexp2 aexp2 | PIncr vname | Division aexp2 aexp2
 
 fun get_first :: "val \<times> state \<Rightarrow> val" where
 "get_first (a, s) = a"
@@ -318,10 +320,10 @@ fun aval2 :: "aexp2 => state => (val \<times> state) option" where
     (* (if (aval2 a s) = None then (if (aval2 b s) = None then None else get_first())) *)
 *)
 fun aval2 :: "aexp2 => state => (val \<times> state) option" where
-"aval2 (N n) s = Some(n, s)" |
-"aval2 (V x) s = Some(s x, s)" |
+"aval2 (N2 n) s = Some(n, s)" |
+"aval2 (V2 x) s = Some(s x, s)" |
 "aval2 (PIncr x) s = Some(s x, s(x := (s x + 1)))" |
-"aval2 (Plus a b) s = operationPlusWithNone (aval2 a s) (aval2 b s)" |
+"aval2 (Plus2 a b) s = operationPlusWithNone (aval2 a s) (aval2 b s)" |
 "aval2 (Division a b) s = (if (get_first_withOption(aval2 b s) = Some(0)) then None else (operationDivWithNone (aval2 a s) (aval2 b s)))"
 (* 
 Type unification failed: Clash of types "_ option" and "_ \<times> _"
@@ -332,20 +334,64 @@ Operator:  get_first :: int \<times> (char list \<Rightarrow> int) \<Rightarrow>
 Operand:   aval2 a s :: (int \<times> (char list \<Rightarrow> int)) option
 *)
 
-value "aval2 (N 2) (\<lambda> x. 1)"
+value "aval2 (N2 2) (\<lambda> x. 1)"
 value "aval2
-  (Plus
-    (N 2) (N 1))
+  (Plus2
+    (N2 2) (N2 1))
    (\<lambda> x. 1)"
 
 value "aval2
-  (Plus
+  (Plus2
     (PIncr ''x'')
-    (Plus
+    (Plus2
       (PIncr ''x'')
       (Division
         (PIncr ''x'')
-        (N 2))))
+        (N2 2))))
   (\<lambda> x. 2)"
+
+value "aval2
+  (Plus2
+    (PIncr ''x'')
+    (Plus2
+      (PIncr ''x'')
+      (Division
+        (PIncr ''x'')
+        (N2 0))))
+  (\<lambda> x. 2)"
+
+
+(* Exercise 3.6. *)
+
+datatype lexp = Nl int | Vl vname | Plusl lexp lexp | LET vname lexp lexp
+
+fun lval :: "lexp => state => int" where
+"lval (Nl n) s = n" |
+"lval (Vl x) s = s x" |
+"lval (Plusl la lb) s = (lval la s) + (lval lb s)" |
+"lval (LET x la lb) s = lval lb (s(x := (lval la s)))"
+(* かっこの数の問題だった *)
+
+(* 
+これまでのNに対して、適切に名前を変えてやらないといけない
+Operator:  (=) (inline (Nl n)) :: aexp \<Rightarrow> bool
+Operand:   aexp2.N n :: aexp2
+
+as same as V
+Operator:  (=) (inline (Vl x)) :: aexp \<Rightarrow> bool
+Operand:   aexp2.V x :: aexp2
+*)
+fun inline :: "lexp => aexp" where
+"inline (Nl n) = (N n)" |
+"inline (Vl x) = (V x)" |
+"inline (Plusl la lb) = (Plus (inline la) (inline lb))" |
+"inline (LET x la lb) = subst x (inline la) (inline lb)"
+
+(* HINT: arbitrary:sを付けると、sledgehammerが通る *)
+lemma "aval (inline e) s = lval e s"
+apply(induction e arbitrary: s)
+apply(auto split:lexp.split)
+(* sledgehammer *)
+by (simp add: substitution_lemma)
 
 end
