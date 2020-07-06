@@ -469,4 +469,22 @@ fun bsimp :: "bexp => bexp" where
 "bsimp (And b1 b2) = and (bsimp b1) (bsimp b2)" |
 "bsimp (Less a1 a2) = less (asimp a1) (asimp a2)" 
 
+subsubsection "Exercises"
+
+(* Exercise 3.7. *)
+
+fun Eq :: "aexp => aexp => bexp" where
+"Eq a1 a2 = And (Not (Less a1 a2)) (Not (Less a2 a1))"
+
+lemma "bval (Eq a1 a2) s = (aval a1 s = aval a2 s)"
+apply(auto)
+done
+
+fun Le :: "aexp => aexp => bexp" where
+"Le a1 a2 = Not (Less a2 a1)"
+
+lemma "bval (Le a1 a2) s = (aval a1 s \<le> aval a2 s)"
+apply(auto)
+done
+
 end
