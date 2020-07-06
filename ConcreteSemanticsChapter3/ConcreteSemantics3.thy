@@ -429,4 +429,44 @@ apply(auto split:lexp.split)
 (* sledgehammer *)
 by (simp add: substitution_lemma)
 
+subsection "3.2 Boolean Expressions"
+
+datatype bexp = Bc bool | Not bexp | And bexp bexp | Less aexp aexp
+
+fun bval :: "bexp => state => bool" where
+"bval (Bc v) s = v" |
+"bval (Not b) s = (\<not> bval b s)" |
+"bval (And b1 b2) s = (bval b1 s \<and> bval b2 s)" |
+"bval (Less a1 a2) s = (aval a1 s < aval a2 s)"
+
+subsubsection "3.2.1 Constant Folding"
+
+(* define optimizing versions of the constructors *)
+
+fun not :: "bexp => bexp" where
+"not (Bc True) = Bc False" |
+"not (Bc False) = Bc False" |
+"not b = Not b"
+
+(* Outer syntax error\<^here>: name expected,
+but keyword and\<^here> was found *)
+fun "and" :: "bexp => bexp => bexp" where
+"and (Bc True) b = b" |
+"and b (Bc True) = b" |
+"and (Bc False) b = Bc False" |
+"and b (Bc False) = Bc False" |
+"and b1 b2 = And b1 b2"
+
+fun less :: "aexp => aexp => bexp" where
+"less (N n1) (N n2) = Bc (n1 < n2)" |
+"less a1 a2 = Less a1 a2"
+
+(* replace the constructors in a bottom-up manner: *)
+
+fun bsimp :: "bexp => bexp" where
+"bsimp (Bc v) = Bc v" |
+"bsimp (Not b) = not (bsimp b)" |
+"bsimp (And b1 b2) = and (bsimp b1) (bsimp b2)" |
+"bsimp (Less a1 a2) = less (asimp a1) (asimp a2)" 
+
 end
