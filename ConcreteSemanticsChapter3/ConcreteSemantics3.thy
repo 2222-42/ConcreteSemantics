@@ -299,6 +299,8 @@ fun get_first_withOption :: "(val \<times> state)option \<Rightarrow> val option
 fun get_last :: "val \<times> state \<Rightarrow> state" where
 "get_last (a, s) = s"
 
+(* operationPlusWithNoneとoperationDivWithNoneとは共通化できそう
+-> operationWithOptionを作った *)
 fun operationPlusWithNone :: "(val \<times> state) option => (val \<times> state) option => (val \<times> state) option" where
 "operationPlusWithNone a None = None" |
 "operationPlusWithNone None b = None" |
@@ -309,7 +311,6 @@ fun operationDivWithNone :: "(val \<times> state) option => (val \<times> state)
 "operationDivWithNone None b = None" |
 "operationDivWithNone (Some x) (Some y) = Some (get_first(x) div get_first(y), get_last(y))"
 (* 
-
 fun aval2 :: "aexp2 => state => (val \<times> state) option" where
 "aval2 (N n) s = (n, s)" |
 "aval2 (V x) s = (s x, s)" |
@@ -351,6 +352,40 @@ value "aval2
   (\<lambda> x. 2)"
 
 value "aval2
+  (Plus2
+    (PIncr ''x'')
+    (Plus2
+      (PIncr ''x'')
+      (Division
+        (PIncr ''x'')
+        (N2 0))))
+  (\<lambda> x. 2)"
+
+
+fun operationWithOption ::  "(int => int => int) => (val \<times> state) option => (val \<times> state) option => (val \<times> state) option" where
+"operationWithOption f a None = None" |
+"operationWithOption f None b = None" |
+"operationWithOption f (Some x) (Some y)  = Some (f (get_first x) (get_first y), get_last(y))"
+
+
+fun aval2WithOption :: "aexp2 => state => (val \<times> state) option" where
+"aval2WithOption (N2 n) s = Some(n, s)" |
+"aval2WithOption (V2 x) s = Some(s x, s)" |
+"aval2WithOption (PIncr x) s = Some(s x, s(x := (s x + 1)))" |
+"aval2WithOption (Plus2 a b) s = operationWithOption (+) (aval2 a s) (aval2 b s)" |
+"aval2WithOption (Division a b) s = (if (get_first_withOption(aval2 b s) = Some(0)) then None else (operationWithOption (div) (aval2 a s) (aval2 b s)))"
+
+value "aval2WithOption
+  (Plus2
+    (PIncr ''x'')
+    (Plus2
+      (PIncr ''x'')
+      (Division
+        (PIncr ''x'')
+        (N2 2))))
+  (\<lambda> x. 2)"
+
+value "aval2WithOption
   (Plus2
     (PIncr ''x'')
     (Plus2
