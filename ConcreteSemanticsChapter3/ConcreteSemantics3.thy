@@ -521,4 +521,77 @@ apply(induction b)
 apply(auto)
 done
 
+(* Exercise 3.9. *)
+
+datatype pbexp = VAR vname | NOT pbexp | AND pbexp pbexp | OR pbexp pbexp
+
+fun pbval :: "pbexp => (vname => bool) => bool" where
+"pbval (VAR x ) s = s x" |
+"pbval (NOT b) s = (\<not> pbval b s)" |
+"pbval (AND b1 b2) s = (pbval b1 s \<and> pbval b2 s)" |
+"pbval (OR b1 b2) s = (pbval b1 s \<or> pbval b2 s)"
+
+(* expression is in NNF (negation normal form)
+if NOT is only applied directly to VARs
+*)
+fun is_nnf :: "pbexp => bool" where
+"is_nnf (VAR X) = True" |
+"is_nnf (NOT (VAR X)) = True" |
+"is_nnf (NOT y) = False" |
+"is_nnf (AND b1 b2) = (is_nnf b1 \<and> is_nnf b2)" |
+"is_nnf (OR b1 b2) = (is_nnf b1 \<and> is_nnf b2)"
+
+ (* that converts a pbexp into NNF by pushing NOT inwards as much as possible. *)
+fun nnf :: "pbexp => pbexp" where
+"nnf (VAR x) = VAR x" |
+"nnf (NOT (VAR x)) = NOT (VAR x)" |
+"nnf (NOT (NOT a)) = nnf a" |
+"nnf (NOT (OR a b)) = AND (nnf (NOT a)) (nnf(NOT b))" |
+"nnf (NOT (AND a b)) = OR (nnf (NOT a)) (nnf(NOT b))" |
+"nnf (AND a b) = AND (nnf a) (nnf b)" |
+"nnf (OR a b) = OR (nnf a) (nnf b)"
+
+(* Prove that nnf preserves the value (pbval (nnf b) s = pbval b s) and 
+nnfが保存するのだから、nnfに関するinductでいいやろ。
+
+returns an NNF (is_nnf (nnf b)) *)
+lemma "pbval (nnf b) s = pbval b s"
+apply(induction b rule: nnf.induct)
+apply(auto)
+done
+
+lemma "is_nnf (nnf b)"
+apply(induction b rule: nnf.induct)
+apply(auto)
+done
+
+(* 
+DNF (disjunctive normal form) 
+if it is in NNF and 
+if no OR occurs below an AND.
+*)
+
+(* Define a corresponding test is_dnf :: pbexp => bool. *)
+(* 
+"is_not_the_form_and_or (AND (OR a b) c) = False" | 
+"is_not_the_form_and_or (AND a (OR b c)) = False" |
+この部分は共通化させたいですね。
+*)
+
+fun is_not_the_form_and_or :: "pbexp => bool" where
+"is_not_the_form_and_or (VAR x) = True"|  
+"is_not_the_form_and_or (NOT y) = True" |
+"is_not_the_form_and_or (OR a b) = (is_not_the_form_and_or a \<and> is_not_the_form_and_or b)" |
+"is_not_the_form_and_or (AND (OR a b) c) = False" | 
+"is_not_the_form_and_or (AND a (OR b c)) = False" |
+"is_not_the_form_and_or (AND a b) =  (is_not_the_form_and_or a \<and> is_not_the_form_and_or b)"
+
+
+fun is_dnf :: "pbexp => bool" where
+"is_dnf e = (is_nnf e \<and> is_not_the_form_and_or e)"
+
+(* Define a conversion function dnf_of_nnf :: pbexp ) pbexp from NNF to DNF. *)
+(* fun dnf_of_nnf :: "pbexp => pbexp" where
+"dnf_of_nnf" *)
+
 end
