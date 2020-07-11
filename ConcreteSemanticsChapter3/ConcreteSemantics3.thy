@@ -655,4 +655,113 @@ apply (simp_all add: mk_dnf_is_nnf)
 (* sledgehammer *)
 using mk_dnf_is_dnf by auto
 
+subsubsection "3.3 Stack Machine and Compilation"
+(* a simple stack machine and compiler for arithmetic expressions. *)
+datatype instr = LOADI val | LOAD vname | ADD
+
+(* 
+- LOADI n : (Load Immediate) puts n on top of the stack, 
+- LOAD x : puts the value of x on top of the stack, and 
+- ADD : replaces the two topmost elements of the stack by their sum
+*)
+
+type_synonym stack = "val list"
+(* The top of the stack is its first element, the head of the list. *)
+
+(* Addで、
+stackが空の場合と、要素が1つの場合のみの場合についての定義はなされていないが
+大丈夫だろうか？
+Missing patterns in function definition:
+\<And>b. exec1 ADD b [] = undefined
+\<And>b v. exec1 ADD b [v] = undefined 
+
+-> A stack underflow
+*)
+fun exec1 :: "instr => state => stack => stack" where
+"exec1 (LOADI n) _ stk = n # stk" |
+"exec1 (LOAD x) s stk = s(x) # stk" |
+"exec1 ADD _ (j # i # sdk) = (i + j) # sdk"
+
+fun exec:: "instr list => state => stack => stack" where
+"exec [] _ stk = stk" |
+"exec (i#is) s stk = exec is s (exec1 i s stk)"
+
+(* The simplicity of this definition is due to the absence of jump instructions. *)
+(* Forward jumps could still be accommodated, but backward jumps would cause a serious problem: 
+execution might not terminate.
+*)
+
+(* Compilation of arithmetic expressions *)
+fun comp :: "aexp => instr list" where
+"comp (N n) = [LOADI n]" |
+"comp (V x) = [LOAD x]" |
+"comp (Plus e1 e2) = comp e1 @ comp e2 @ [ADD]"
+
+lemma exec_division: "exec (is1 @ is2) s stk = exec is2 s (exec is1 s stk )"
+apply(induction is1 arbitrary: stk)
+apply(auto)
+done
+
+lemma "exec (comp a) s stk = aval a s # stk"
+apply(induction a arbitrary:stk)
+apply(auto)
+(*  1. \<And>e1 e2.
+       exec (ConcreteSemantics3.comp e1) s stk = aval e1 s # stk \<Longrightarrow>
+       exec (ConcreteSemantics3.comp e2) s stk = aval e2 s # stk \<Longrightarrow>
+       exec (ConcreteSemantics3.comp e1 @ ConcreteSemantics3.comp e2 @ [ADD]) s
+        stk =
+       (aval e1 s + aval e2 s) # stk *)
+(* sledgehammer *)
+ by (simp add: exec_division)
+
+subsubsection "Exercises"
+
+(* Exercise 3.10. *)
+(* A stack underflow *)
+fun exec2 :: "instr => state => stack => stack option" where
+"exec2 (LOADI n) _ stk = Some (n # stk)" |
+"exec2 (LOAD x) s stk = Some (s(x) # stk)" |
+"exec2 ADD _ (j # i # sdk) = Some ((i + j) # sdk)" |
+"exec2 Add _ _ = None"
+
+fun mexec:: "instr list => state => stack => stack option " where
+"mexec [] _ stk = Some(stk)" |
+"mexec (i#is) s stk = 
+          (case (exec2 i s stk) of Some stk' => mexec is s stk' |
+                                  None => None)"
+
+fun mcomp :: "aexp => instr list" where
+"mcomp (N n) = [LOADI n]" |
+"mcomp (V x) = [LOAD x]" |
+"mcomp (Plus e1 e2) = mcomp e1 @ mcomp e2 @ [ADD]"
+
+(* 
+mexec (mcomp a1 @ mcomp a2 @ [ADD]) s stk = Some ((aval a1 s + aval a2 s) # stk)
+Some ((aval a11 s + aval a2 s) # stk)) \<Longrightarrow>
+       (\<And>stk. mexec (mcomp a12 @ mcomp a2 @ [ADD]) s stk =
+              Some ((aval a12 s + aval a2 s) # stk)) \<Longrightarrow>
+       mexec (mcomp a11 @ mcomp a12 @ ADD # mcomp a2 @ [ADD]) s stk =
+       Some ((aval a11 s + aval a12 s + aval a2 s) # stk)
+*)
+(* 
+"mexec (mcomp a1) s stk = Some (aval a1 s # stk) ==> mexec (mcomp a1 @ mcomp a2 @ [ADD]) s stk = Some ((aval a1 s + aval a2 s) # stk)"
+*)
+lemma mexec_division: "mexec a1 s stk = Some stk' ==> mexec (a1 @ a2) s stk = mexec a2 s stk'"
+apply(induction a1 arbitrary: stk)
+apply(auto)
+(* sledgehammer *)
+by (metis option.case_eq_if option.discI)
+
+(* 
+ 1. \<And>a1 a2 stk.
+       (\<And>stk. mexec (mcomp a1) s stk = Some (aval a1 s # stk)) \<Longrightarrow>
+       (\<And>stk. mexec (mcomp a2) s stk = Some (aval a2 s # stk)) \<Longrightarrow>
+       mexec (mcomp a1 @ mcomp a2 @ [ADD]) s stk =
+       Some ((aval a1 s + aval a2 s) # stk)
+*)
+lemma "mexec (mcomp a) s stk = Some(aval a s # stk)"
+apply(induction a arbitrary:stk)
+apply(auto)
+ by (simp add: mexec_division)
+
 end
