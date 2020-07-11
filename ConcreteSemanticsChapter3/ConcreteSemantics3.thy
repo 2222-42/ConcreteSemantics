@@ -590,8 +590,69 @@ fun is_not_the_form_and_or :: "pbexp => bool" where
 fun is_dnf :: "pbexp => bool" where
 "is_dnf e = (is_nnf e \<and> is_not_the_form_and_or e)"
 
-(* Define a conversion function dnf_of_nnf :: pbexp ) pbexp from NNF to DNF. *)
-(* fun dnf_of_nnf :: "pbexp => pbexp" where
-"dnf_of_nnf" *)
+(* Define a conversion function dnf_of_nnf :: pbexp => pbexp from NNF to DNF. *)
+
+(* converts an NNF into a DNF (is_nnf b => is_dnf (dnf_of_nnf b)).の証明でとんでもないケースになったので、
+単純化のためにmk_dnf_conjを導入 *)
+fun mk_dnf_conj :: "pbexp \<Rightarrow> pbexp \<Rightarrow> pbexp" where
+"mk_dnf_conj e (OR a b) = OR (mk_dnf_conj e a) (mk_dnf_conj e b)" |
+"mk_dnf_conj (OR a b) e  = OR (mk_dnf_conj a e) (mk_dnf_conj b e)" |
+"mk_dnf_conj x  y  = AND x y"
+
+lemma mk_dnf_preserv : "pbval (mk_dnf_conj a b) s = (pbval a s \<and> pbval b s)"
+  apply(induction a b rule: mk_dnf_conj.induct)
+  apply(auto)
+  done
+
+
+lemma mk_dnf_is_nnf: "is_nnf a ==>
+           is_nnf b ==>
+           is_nnf (mk_dnf_conj  a  b)"
+  apply(induction a b rule:  mk_dnf_conj.induct)
+  apply(auto)
+  done 
+
+fun dnf_of_nnf :: "pbexp => pbexp" where
+"dnf_of_nnf (VAR x) = VAR x" |
+"dnf_of_nnf (NOT a) = NOT a" |
+"dnf_of_nnf (OR a b) = OR (dnf_of_nnf a) (dnf_of_nnf b)" |                                                                                                     
+"dnf_of_nnf (AND a b) =  mk_dnf_conj (dnf_of_nnf a) (dnf_of_nnf b)"  
+(* "dnf_of_nnf (AND (OR a b) c) =  AND (OR (dnf_of_nnf a) (dnf_of_nnf b)) c" |                                                       
+"dnf_of_nnf (AND a (OR b c)) =  AND a (OR (dnf_of_nnf b) (dnf_of_nnf c))" |                                                  
+"dnf_of_nnf (AND a b) =  AND (dnf_of_nnf a) (dnf_of_nnf b)"   *)
+
+(* Prove that your function preserves the
+value (pbval (dnf_of_nnf b) s = pbval b s)  *)
+
+lemma dnf_preserv_pbval:"pbval (dnf_of_nnf b) s = pbval b s"
+apply(induction b rule:dnf_of_nnf.induct)
+apply(auto)
+(* sledgehammer *)
+(* apply (simp add: mk_dnf_preserv)
+(* sledgehammer *)
+using mk_dnf_preserv apply blast
+sledgehammer *)
+apply (simp_all add: mk_dnf_preserv)
+done
+
+(* and converts an NNF into a DNF (is_nnf b => is_dnf (dnf_of_nnf b)). *)
+
+lemma mk_dnf_is_dnf: "is_dnf a ==>
+           is_dnf b ==>
+           is_dnf (mk_dnf_conj a  b)"
+  apply(induction a b rule:  mk_dnf_conj.induct)
+  apply(auto)
+  (* sledgehammer *)
+  (* apply (simp_all add: mk_dnf_is_nnf)
+  sledgehammer *)
+  done 
+
+lemma "is_nnf b ==> is_dnf (dnf_of_nnf b)"
+apply(induction b rule:dnf_of_nnf.induct)
+apply(auto)
+(* sledgehammer *)
+apply (simp_all add: mk_dnf_is_nnf)
+(* sledgehammer *)
+using mk_dnf_is_dnf by auto
 
 end
