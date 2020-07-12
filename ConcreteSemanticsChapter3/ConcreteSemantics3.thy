@@ -832,4 +832,58 @@ apply(auto simp add: Rexec_division)
 (* sledgehammer *)
 by (simp add: register_should_be_left_alone)
 
+(* Exercise 3.12. *)
+
+datatype instr0 = LDI0 val | LD0 vname | MV0 reg | ADD0 reg
+
+(* All instructions refer implicitly to register 0 as the source (MV0) or target (all others) *)
+(* 継続っぽい感じの実装だな *)
+fun Mexec1 :: "instr0 => state => (reg => int) => reg => int" where
+"Mexec1 (LDI0 i) _ f = f(0 := i)" |
+"Mexec1 (LD0 x) s f = f(0 := s(x))" |
+"Mexec1 (MV0 r) _ f = f(r := f 0)" |
+"Mexec1 (ADD0 r) _ f = f(0 := (f 0) + (f r))" 
+
+(* Define the execution exec of a list of instructions as for the stack machine *)
+fun Mexec :: "instr0 list => state => (reg => int) => reg => int" where
+"Mexec [] _ f = f" |
+"Mexec (r#rs) s f = Mexec rs s (Mexec1 r s f)"
+
+(* Define a compiler pretty much as explained above except that
+the compiled code leaves the value of the expression in register 0 *)
+
+(* リストを扱うので慣習としてdivisionの証明 *)
+
+lemma Mexec_division : "Mexec (rs1 @ rs2) s f r = Mexec rs2 s (Mexec rs1 s f) r"
+apply(induction rs1 arbitrary: s f)
+apply(auto)
+done
+
+(* 足し算は、結構面倒
+rに結果が突っ込まれることを考えて
+r + 1でe1のCommpileしたら、
+それは0に入っているから
+それをr に移して、
+r + 2でe2のCommpileをしたら、
+それは0に入っているから
+それをr と合わせたら、結果が得られる。
+*)
+fun Mcomp :: "aexp => reg => instr0 list" where
+"Mcomp (N n) _ = [LDI0 n]" |
+"Mcomp (V x) _ = [LD0 x]" |
+"Mcomp (Plus e1 e2) r = Mcomp e1 (r + 1) @ [MV0 (r + 1)] @ Mcomp e2 (r + 2) @ [ADD0 (r + 1)]"
+
+(* The registers > r should be used in a stack-like fashion for intermediate results,
+the ones < r should be left alone. *)
+lemma register_should_be_left_alone_exec0 : "0 < r1 ==> r1 < r2 ==> Mexec (Mcomp a r2) s f r1 = f r1"
+apply(induction a arbitrary: r2 f)
+apply(auto simp add: Mexec_division)
+done
+
+lemma "Mexec (Mcomp a r) s f 0 = aval a s"
+apply(induction a arbitrary: r s f)
+apply(auto simp add: Mexec_division )
+(* sledgehammer *)
+by (simp add: register_should_be_left_alone_exec0)
+
 end
