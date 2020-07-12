@@ -764,4 +764,72 @@ apply(induction a arbitrary:stk)
 apply(auto)
  by (simp add: mexec_division)
 
+(* Exercise 3.11. *)
+
+type_synonym reg = nat
+
+datatype Rinstr = LDI int reg | LD vname reg | ADD reg reg
+(* Instruction LDI i r loads i into register r, *)
+(* LD x r loads the value of x into register r *)
+(* ADD r 1 r 2 adds register r 2 to register r 1. *)
+
+(* Define the execution of an instruction given a state and a register state *)
+fun Rexec1 :: "Rinstr => state => (reg => int) => reg => int" where
+"Rexec1 (LDI i r) _ f = f(r := i)" |
+"Rexec1 (LD x r) s f = f(r := s(x))" |
+"Rexec1 (ADD r1 r2) _ f = f(r1 := (f r1) + (f r2))" 
+
+(* Define the execution exec of a list of instructions as for the stack machine *)
+fun Rexec :: "Rinstr list => state => (reg => int) => reg => int" where
+"Rexec [] _ f = f" |
+"Rexec (r#rs) s f = Rexec rs s (Rexec1 r s f)"
+
+(* 
+大体、リストを扱うんだったら、部分リストに対しての証明をしたほうがいいと思う
+*)
+
+lemma Rexec_division : "Rexec (rs1 @ rs2) s f r = Rexec rs2 s (Rexec rs1 s f) r"
+apply(induction rs1 arbitrary: s f)
+apply(auto)
+done
+
+(* The compiler takes an arithmetic expression `a` and a register `r` and produces
+a list of instructions whose execution places the value of a into `r` *)
+(* The registers > r should be used in a stack-like fashion for intermediate results,
+the ones < r should be left alone. *)
+(* Define the compiler and prove it correct:
+exec (comp a r ) s rs r = aval a s. *)
+
+fun Rcomp :: "aexp => reg => Rinstr list" where
+"Rcomp (N n) r = [LDI n r]" |
+"Rcomp (V x) r = [LD x r]" |
+"Rcomp (Plus e1 e2) r = (Rcomp e1 r) @ (Rcomp e2 (r + 1)) @ [ADD r (r + 1)]"
+(* "Rcomp (Plus e1 e2) r = (Rcomp e1 r) @ (Rcomp e2 r) @ [ADD r r]"
+e1とe2のregister先は異なることが望まれる
+なぜなら、"Rexec1 (ADD r1 r2) _ f = f(r1 := (f r1) + (f r2))" 
+そして、和はStack Likeであるから
+The registers > r should be used in a stack-like fashion for intermediate results,
+*)
+
+(* 感覚でやってるとarbitraryの取り方すらわからなくなるから、先に証明のイメージを掴もう *)
+lemma register_should_be_left_alone: "r1 < r2 ==> Rexec (Rcomp a r2) s f r1 = f r1"
+apply(induction a arbitrary: f r2)
+apply(auto simp add: Rexec_division)
+(* sledgehammer *)
+done
+
+(* 
+ 1. \<And>a1 a2 r rs.
+       (\<And>r rs. Rexec (Rcomp a1 r) s rs r = aval a1 s) \<Longrightarrow>
+       (\<And>r rs. Rexec (Rcomp a2 r) s rs r = aval a2 s) \<Longrightarrow>
+       Rexec (Rcomp a1 r @ Rcomp a2 (Suc r) @ [Rinstr.ADD r (Suc r)]) s rs r =
+       aval a1 s + aval a2 s
+*)
+
+lemma "Rexec (Rcomp a r) s rs r = aval a s"
+apply(induction a arbitrary: r rs)
+apply(auto simp add: Rexec_division)
+(* sledgehammer *)
+by (simp add: register_should_be_left_alone)
+
 end
