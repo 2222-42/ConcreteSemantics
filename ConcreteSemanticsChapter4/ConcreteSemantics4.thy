@@ -233,4 +233,52 @@ apply (smt insPreservesRightIsGreater )
 (* sledgehammer *)
 by (smt insPreservesLefIsSmaller)
 
+
+subsection "4.3 Proof Automation"
+
+(* 
+The key characteristics of both `simp` and `auto` are
+- They show you where they got stuck, giving you an idea how to continue.
+  - simpは証明がどこでスタックするかを見せ、どう続けるかのideaを与えてくれる
+- They perform the obvious steps but are highly incomplete.
+  - autoは明らかなステップながらもかなり未達成なものをおこなう
+*)
+(*
+Proof Methodがcompleteであるのは、全ての真なるformulasを証明できる場合である。
+HOLおよびtheoryにはcompleteなproof methodはない。
+IsabelleのProof Methodsはいかに未達成かで異なる。
+*)
+
+(* 
+fastforceについて
+- 最初のsubgoalについてのみ実施する。
+- slow versionのforceでは成功するが、fastforceでは失敗することがある
+*)
+
+lemma "\<lbrakk> \<forall> xs \<in> A. \<exists> ys. xs = ys @ ys; us \<in> A \<rbrakk> \<Longrightarrow> \<exists>n. length us = n + n" 
+by fastforce
+
+(* 
+blastについて
+- 複雑な論理的なゴールに対する選択
+- is (in principle) a complete proof procedure for first-order formulas, a fragment of HOL. In practice there is a search bound.
+  - HOLの断片である、一階の論理式に対しては、completeなproof procedureであり
+  - 実践上は探索範囲の束縛がある。
+- does no rewriting and knows very little about equality.
+  - 書き換えることはなく、等式については少し知っている
+- covers logic, sets and relations.
+  - 論理、集合、関係についてはカヴァーしている
+- either succeeds or fails.
+  - 失敗するか成功するかのいずれかである
+
+論理と集合に関する強さと、等式に関する証明の弱さにより、
+前のproof methodsを補完する。
+*)
+
+lemma "\<lbrakk> \<forall> x y. T x y \<or> T y x; \<forall> x y. A x y \<and> A y x \<longrightarrow> x = y;
+        \<forall> x y. T x y \<longrightarrow> A x y \<rbrakk> \<Longrightarrow> \<forall> x y. A x y \<longrightarrow> T x y " 
+by blast
+
+
+
 end
