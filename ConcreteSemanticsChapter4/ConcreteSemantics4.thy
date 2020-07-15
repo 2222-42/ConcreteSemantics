@@ -289,11 +289,11 @@ by (metis append_eq_conv_conj )
 
 (* 
 Isabelleは外部のツールを信用しておらず、チェック可能な証明を要求する。
-    append_eq_conv_conjを合わせて、metisがやっていることがこれ
+  append_eq_conv_conjを合わせて、metisがやっていることがこれ
 
 simpやすでで補題を知っている友人を使うのとは異なり、
 metisを手動で使うことは長ったらしくて退屈
-    代わりにsledgehammerがやってくれる
+  代わりにsledgehammerがやってくれる
 *)
 
 (* 
@@ -303,5 +303,30 @@ sledgehammerは存在している証明を発見してくれる、という保�
 だから、sledgehammerを使う前に、simpやautoを使うことを勧める
 *)
 
+subsubsection "4.3.2 Arithmetic"
+
+(* 
+arithmetic formulas: 変数、数、各種演算子(+, -, =, <, <=)、あと一般的な論理結合子を含む式のこと
+- これは、線形算術(linear arithmetic)と呼ばれる。
+  - 数とのかけ算 `2*n` は許されている
+
+このような式は `arith` で証明される
+
+また、natural numbersのみではなく、integersやreal numbersにも対応している
+
+他にも
+- min
+- max
+*)
+
+lemma "\<lbrakk> (a::nat) \<le> x + b; 2*x < c \<rbrakk> \<Longrightarrow> 2*a + 1 \<le> 2*b + c"
+(* apply(auto)
+done *)
+by arith
+
+(* 
+autoやsimpも多くの線形算術を証明することはできるが、それはarithの早い(その点で弱い)バージョンによる
+だから、必ずしも明示的に呼ぶ必要はない。
+*)
 
 end
