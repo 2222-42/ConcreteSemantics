@@ -63,14 +63,81 @@ fun set :: "'a tree => 'a set" where
 that tests if an int tree is ordered *)
 
 (* 
-左の枝が小さいと仮定する
-左の枝の最大値は親のより小さく
-右の枝の最小値はと親のより大きい
+左の部分木が小さいと仮定する
+左の部分木の最大値は親のより小さく
+右の部分木の最小値はと親のより大きい
+さらに、
+左の部分木は整列しており
+右の部分木は整列している
 *)
 
-(* fun ord :: "int tree => bool" where
+
+(*
+intのような無限なタイプはenumerableではないから、集合を使った実装ではエラーが起きる。
+Infinite types, such as int and nat, are not enumerable, and we cannot 
+check for function equality (for the chosen translation above).
+
+The solution to enable execution of this proposition even with an 
+infinite type is to choose a different representation for functions (and 
+sets).
+Different on-going discussions and effort by the developers will soon 
+enable that this is possible, but right now, we are at the unlucky stage 
+that none of them are fully automatic and could be applied by quickcheck 
+behind the scenes.
+
+NB: I am still not happy with the error message. It is the honest truth, 
+why quickcheck cannot execute the proposition, but admittedly users 
+might struggle understanding its explanation.
+ref: https://lists.cam.ac.uk/pipermail/cl-isabelle-users/2011-September/msg00036.html
+
+fun root_is_smaller :: "int * int tree => bool" where
+"root_is_smaller(_, Tip) = True" |
+"root_is_smaller(a, T) = 
+    (let setOfElements = {a. \<forall> x \<in> set T. a \<le> x } in 
+        \<forall> x \<in> setOfElements. a \<le> x)"
+
+fun root_is_greater :: "int * int tree => bool" where
+"root_is_greater(_, Tip) = True" |
+"root_is_greater(a, T) =     (let setOfElements = {a. \<forall> x \<in> set T. a \<ge> x } in 
+        \<forall> x \<in> setOfElements. a \<ge> x)"
+*)
+
+(*
+以下の2つの条件を使えば、 
+- 右の枝が常に大きい
+- 左の枝が常に大きい
+
+比較する最大の値は取れるのでは
+
+以下のようなケースで整列していないことを示す必要がある
+value "ord (Node (Node (Node Tip 0 Tip) 1 (Node Tip 2 Tip)) 3 (Node (Node Tip 2 Tip) 5 Tip))"
+
+条件をよく考えればいかでOKだった
+    a \<ge> (getRightestLeafFromTree a L) \<and> 
+    a \<le> (getLeftestLeafFromTree a R))"
+*)
+
+fun getRightestLeafFromTree :: "int => int tree => int" where
+"getRightestLeafFromTree i Tip = i" |
+"getRightestLeafFromTree _ (Node L a R) = getRightestLeafFromTree a R"
+
+fun getLeftestLeafFromTree :: "int => int tree => int" where
+"getLeftestLeafFromTree i Tip = i" |
+"getLeftestLeafFromTree _ (Node L a R) = getLeftestLeafFromTree a L"
+
+fun ord :: "int tree => bool" where
 "ord Tip = True" |
-"ord (Node L a R) = True" *)
+"ord (Node L a R) = 
+    (ord L \<and> 
+    ord R \<and> 
+    a \<ge> (getRightestLeafFromTree a L) \<and> 
+    a \<le> (getLeftestLeafFromTree a R))"
+
+(* value "ord (Node (Node Tip 2 Tip) 1 (Node Tip 3 Tip))"
+value "ord (Node (Node (Node Tip 0 Tip) 2 (Node Tip 1 Tip)) 3 (Node Tip 5 Tip))"
+value "ord (Node (Node (Node Tip 3 Tip) 1 (Node Tip 2 Tip)) 3 (Node Tip 5 Tip))"
+value "ord (Node (Node (Node Tip 0 Tip) 1 (Node Tip 2 Tip)) 3 (Node (Node Tip 2 Tip) 5 Tip))"
+value "ord (Node (Node (Node Tip 0 Tip) 1 (Node Tip 2 Tip)) 3 (Node (Node Tip 4 Tip) 5 Tip))" *)
 
 (* Define a function ins 
 - that inserts an element into an ordered int tree
@@ -78,8 +145,92 @@ that tests if an int tree is ordered *)
 - If the element is already in the tree, the same tree should be returned.
 *)
 
+
+(* 
+以下のように書くと遅いが
+"ins x (Node left y right) = (if x = y then (Node left y right)
+        else if x < y then Node (ins x left) y right
+        else Node left x (ins y right))"
+
+こう書くと早い
+"ins a (Node xt b yt) = (if (a = b) then (Node xt b yt) else
+                        (if (a < b) then (Node (ins a xt) b yt) else
+                        (Node xt b (ins a yt)) ))"
+
+なんで？
+-> 普通に実装を間違えていた "Node left x (ins y right))"d / "Node left y (ins x right))"
+*)
+fun ins :: "int => int tree => int tree" where
+"ins x Tip = Node Tip x Tip" |
+"ins x (Node left y right) = (if x = y then (Node left y right)
+        else if x < y then Node (ins x left) y right
+        else Node left y (ins x right))"
+
+(* value "ins 2 (Node (Node (Node Tip 0 Tip) 1 (Node Tip 2 Tip)) 3 (Node (Node Tip 4 Tip) 5 Tip))"
+value "(Node (Node (Node Tip 0 Tip) 1 (Node Tip 2 Tip)) 3 (Node (Node Tip 4 Tip) 5 Tip)) 
+= (ins 2 (Node (Node (Node Tip 0 Tip) 1 (Node Tip 2 Tip)) 3 (Node (Node Tip 4 Tip) 5 Tip)))"
+value "ins 2 (Node (Node (Node Tip 0 Tip) 1 (Node Tip 3 Tip)) 4 (Node (Node Tip 5 Tip) 7 Tip))"
+value "ins 6 (Node (Node (Node Tip 0 Tip) 1 (Node Tip 3 Tip)) 4 (Node (Node Tip 5 Tip) 7 Tip))" *)
+
 (* Prove correctness of ins: 
 set (ins x t) = {x} \union set t and ord t => ord (ins i t)
 . *)
+
+(* 
+証明に時間がかかっているので単純化しないといけない
+-> insの実装を間違えていたことが原因
+*)
+lemma "set (ins x t) = {x} \<union> set t" 
+apply(induction t)
+(* sledgehammer *)
+apply(auto)
+done
+
+(* 
+apply(induction t)
+apply(auto)
+by (metis getRightestLeafFromTree.simps(1) getRightestLeafFromTree.simps(2) less_trans linorder_neqE_linordered_idom ord.cases)
+*)
+lemma insPreservesRightIsGreater : "(getRightestLeafFromTree i1 t) < y
+                                    ==> i1 < y
+                                    ==> i2 < y
+                                    ==> (getRightestLeafFromTree i1 (ins i2 t)) < y"
+apply(induction t arbitrary: i1)
+apply(auto)
+done
+(* by (metis getRightestLeafFromTree.simps(1) getRightestLeafFromTree.simps(2) less_trans linorder_neqE_linordered_idom ord.cases) *)
+
+lemma insPreservesLefIsSmaller : "(getLeftestLeafFromTree i1 t) > y
+                                    ==> i1 > y
+                                    ==> i2 > y
+                                    ==> (getLeftestLeafFromTree i1 (ins i2 t)) > y"
+apply(induction t arbitrary: i1)
+apply(auto)
+done
+
+(* (2 subgoals):
+ 1. \<And>t1 x2 t2.
+       ord (ins i t1) \<Longrightarrow>
+       ord (ins i t2) \<Longrightarrow>
+       ord t1 \<Longrightarrow>
+       ord t2 \<Longrightarrow>
+       getRightestLeafFromTree x2 t1 \<le> x2 \<Longrightarrow>
+       x2 \<le> getLeftestLeafFromTree x2 t2 \<Longrightarrow>
+       i < x2 \<Longrightarrow> getRightestLeafFromTree x2 (ins i t1) \<le> x2
+ 2. \<And>t1 x2 t2.
+       ord (ins i t1) \<Longrightarrow>
+       ord (ins i t2) \<Longrightarrow>
+       ord t1 \<Longrightarrow>
+       ord t2 \<Longrightarrow>
+       getRightestLeafFromTree x2 t1 \<le> x2 \<Longrightarrow>
+       x2 \<le> getLeftestLeafFromTree x2 t2 \<Longrightarrow>
+       \<not> i < x2 \<Longrightarrow> i \<noteq> x2 \<Longrightarrow> x2 \<le> getLeftestLeafFromTree x2 (ins i t2) *)
+lemma "ord t ==> ord (ins i t)"
+apply(induction t)
+apply(auto)
+(* sledgehammer *)
+apply (smt insPreservesRightIsGreater )
+(* sledgehammer *)
+by (smt insPreservesLefIsSmaller)
 
 end
