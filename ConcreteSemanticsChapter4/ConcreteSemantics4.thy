@@ -279,6 +279,29 @@ lemma "\<lbrakk> \<forall> x y. T x y \<or> T y x; \<forall> x y. A x y \<and> A
         \<forall> x y. T x y \<longrightarrow> A x y \<rbrakk> \<Longrightarrow> \<forall> x y. A x y \<longrightarrow> T x y " 
 by blast
 
+subsubsection "4.3.1 Sledgehammer"
+
+(* text と異なり、metisがsuggestされなかった。*)
+lemma "\<lbrakk> xs @ ys = ys @ xs; length xs = length ys \<rbrakk> \<Longrightarrow> xs = ys"
+(* sledgehammer *)
+(* using append_eq_append_conv by blast *)
+by (metis append_eq_conv_conj )
+
+(* 
+Isabelleは外部のツールを信用しておらず、チェック可能な証明を要求する。
+    append_eq_conv_conjを合わせて、metisがやっていることがこれ
+
+simpやすでで補題を知っている友人を使うのとは異なり、
+metisを手動で使うことは長ったらしくて退屈
+    代わりにsledgehammerがやってくれる
+*)
+
+(* 
+sledgehammerは存在している証明を発見してくれる、という保証はない
+また、sledgehammerが他のproof methodsより優れているわけでもない、比較可能なものではない
+
+だから、sledgehammerを使う前に、simpやautoを使うことを勧める
+*)
 
 
 end
