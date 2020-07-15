@@ -329,4 +329,19 @@ autoやsimpも多くの線形算術を証明することはできるが、それ
 だから、必ずしも明示的に呼ぶ必要はない。
 *)
 
+subsubsection "4.3.3 Trying Them All"
+
+(* 
+上記の自動証明手法の全てを使いたいのだったら
+`try`
+と打ち込めばいい。
+
+軽量バージョンの
+`try0`
+はsledgehammerを呼ばない。
+
+`try0 simp: ... intro: ...`
+とすれば、特定のsimpification や introduction ruleを追加することもできる。
+*)
+
 end
