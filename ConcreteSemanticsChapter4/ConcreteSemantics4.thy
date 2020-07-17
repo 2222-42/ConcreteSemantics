@@ -363,10 +363,37 @@ subsubsection "4.4.1 Instantiating Unknowns"
 - conjI [of "a=b" "False"] instantiates the unknowns in conjI from left to right
   - `th[of string1 ... stringn]` instantiates the unknowns in the theorem `th` from left to right 
   with the terms string1 to stringn
-  - 全部のunknownsを初期化する必要がない場合、 `conjI[of _ "False"]`と、 `_` を使うことでスキップすることができる
+  - 全部のunknownsのインスタンスを生成する必要がない場合、 `conjI[of _ "False"]`と、 `_` を使うことでスキップすることができる
 - Unification is the process of making two terms syntactically equal by suitable instantiations of unknowns
   - For example, unifying `?P ^ ?Q` with `a = b ^ False` instantiates `?P` with `a = b` and `?Q` with `False`
   - 明示的に名前を付けて初期化することもできる `conjI[where ?P = "a=b" and ?Q = "Flase"]`と。
+*)
+
+subsubsection "4.4.2 Rule Application"
+
+(* 
+Rule application とは、証明の状態に対して、前に戻るルール(rule backwards)を適用することである 
+
+例:
+1. ... ==> A /\ B
+という証明状態(proof state)に`conjI`を使うと、2つのサブゴール
+sub1. ... ==> A
+sub2. ... ==> B
+が作られる。
+
+\<lbrakk> A1; ...; An \<rbrakk> \<Longrightarrow> A
+という規則をあるサブゴール
+... ==> C
+に適用することは2つのStepを踏んで進む
+1. AとCをUnifyし、ルールの中のunknownsのインスタンスを生成する
+2. サブゴールCを新たなサブゴールA1からAnまでと置き換える
+*)
+
+(* 
+rule xyzを適用するコマンド：
+  aply(rule xyz)
+
+これは、rule xyzでの(backchaining)と、呼ばれもする。
 *)
 
 end
