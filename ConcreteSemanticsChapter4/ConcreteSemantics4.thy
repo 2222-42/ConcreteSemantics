@@ -344,4 +344,29 @@ subsubsection "4.3.3 Trying Them All"
 とすれば、特定のsimpification や introduction ruleを追加することもできる。
 *)
 
+subsection "4.4 Single Step Proofs"
+
+(* 
+ある自動証明の手法で失敗したら、proof ruleの段階的(stepwise)な適用が必要になる
+
+たとえば、A /\ B　の証明で失敗したら、これを二つに、AとBに分けたい。
+これは conjunction introduction (conjI)によってなされる。
+*)
+
+subsubsection "4.4.1 Instantiating Unknowns"
+
+(* 
+定理を証明し終えたら、Isabelleはそこに表れる自由変数xをunknownsと呼ばれる ?xに置き換える
+*)
+
+(* 
+- conjI [of "a=b" "False"] instantiates the unknowns in conjI from left to right
+  - `th[of string1 ... stringn]` instantiates the unknowns in the theorem `th` from left to right 
+  with the terms string1 to stringn
+  - 全部のunknownsを初期化する必要がない場合、 `conjI[of _ "False"]`と、 `_` を使うことでスキップすることができる
+- Unification is the process of making two terms syntactically equal by suitable instantiations of unknowns
+  - For example, unifying `?P ^ ?Q` with `a = b ^ False` instantiates `?P` with `a = b` and `?Q` with `False`
+  - 明示的に名前を付けて初期化することもできる `conjI[where ?P = "a=b" and ?Q = "Flase"]`と。
+*)
+
 end
