@@ -259,7 +259,7 @@ lemma "\<lbrakk> \<forall> xs \<in> A. \<exists> ys. xs = ys @ ys; us \<in> A \<
 by fastforce
 
 (* 
-blastについて
+`blast`について
 - 複雑な論理的なゴールに対する選択
 - is (in principle) a complete proof procedure for first-order formulas, a fragment of HOL. In practice there is a search bound.
   - HOLの断片である、一階の論理式に対しては、completeなproof procedureであり
@@ -431,5 +431,70 @@ Isabelleは色々な導入規則をしっているから、以下のコマンド
 lemma "\<lbrakk> (a::nat) \<le> b; b \<le> c; c \<le> d; d \<le> e \<rbrakk> \<Longrightarrow> a \<le> e"
 (* apply(auto) *)
 by(blast intro: le_trans)
+
+subsubsection "4.4.4 Forward Proof"
+
+(* Forward proof は古い定理から新しい定理を導出すること
+- 他のルールへのルールの適用(Application of rules to other rules) は前向きに動作する;前提から結論へ
+- 証明状態へのルールの適用(application of rules to proof states)は後ろ向きに動作する;結論から前提へ
+*)
+
+(* 
+すでに`conjI`でも見てたが、`of`がそれ。
+  これは自由変数に対して適用する。
+`OF`は定理に対して適用する
+
+Given 
+- a theorem `A ==> B` called r and 
+- a theorem `A'` called `r'` 
+, 
+
+-> the theorem `r [OF r']` is the result of applying `r` to `r'` ,
+  where `r` should be viewed as a function taking a theorem `A` and returning `B`. 
+  
+More precisely, 
+- `A` and `A'` are unified(AとA'が統一されていて(これがなされていないと失敗する)), 
+- thus instantiating the unknowns in `B`(Bの中のunknownsのインスタンスを生成して), 
+- and the result(`r [OF r']`) is the instantiated `B`(結果が、Bのインスタンスを生成したものになる).
+*)
+
+(* 使い方：
+r が \<lbrakk> A1, ... , An \<rbrakk> => A という形の時
+m \<le> n で、r1からrmまでが定理であるとして、
+これらに対して、それらを、unifyして、証明することで
+  r [OF r1 ... rm]
+が得られる。
+
+例:
+  thm conjI [OF refl[of "a"] refl[of "b"]]
+
+なお、
+- refl は `?t = ?t` の定理
+- thm は結果のみを出すだけのコマンド
+
+これによって、a = a \<and> b = b が得られる。
+*)
+
+(* 
+Forward reasoningは証明状態(proof states)に関連しても意味をなす
+
+modifier の `dest` を使えば、特定のルールを前進に使うように、proof methodに指令するようにできる
+
+modifier `dest: r` allows proof search to reason forward with r, 
+  i.e., to replace an assumption A', where A' unifies with A, 
+  with the correspondingly instantiated B
+*)
+
+lemma "Suc(Suc(Suc a)) \<le> b ==> a \<le> b"
+by(blast dest: Suc_leD)
+
+(* 
+この例について
+
+blastは複雑な論理式に対して適用する
+
+Suc_leDでbackchainすることもできるが、
+前提が結論より複雑だから、backchainすることは非決定を導く
+*)
 
 end
