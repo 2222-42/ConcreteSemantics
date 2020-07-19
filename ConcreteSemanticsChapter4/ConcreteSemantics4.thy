@@ -396,4 +396,40 @@ rule xyzを適用するコマンド：
 これは、rule xyzでの(backchaining)と、呼ばれもする。
 *)
 
+subsubsection "4.4.3 Introduction Rules"
+
+(* 
+introduction rules: 
+  They explain under which premises some logical construct can be introduced
+  導入規則は、どの前提において、論理構成子が導入されたのかを説明してくれる
+
+eg.
+- conjI
+- impI
+- allI
+- iffI
+
+these rules are helpful in locating where and why automation fails.
+  自動証明がどこでどうして失敗したのかを示すのに役立つ
+*)
+
+(* 
+Isabelleは色々な導入規則をしっているから、以下のコマンドの入力によって、
+現在のサブゴールに対して適切な規則を自動で選ぶ：
+  apply rule
+*)
+
+(* 
+`intro`を使えば、自分の定理をintroduction ruleに追加することができる
+
+けれどintro attributeには注意を払わなくてはいけない、
+  なぜなら、探索空間を増やし、非決定に導くから。
+
+使うときは, `blast` もしくはそれに近いものを呼び出す中でのみ使うことが推奨される。
+*)
+
+lemma "\<lbrakk> (a::nat) \<le> b; b \<le> c; c \<le> d; d \<le> e \<rbrakk> \<Longrightarrow> a \<le> e"
+(* apply(auto) *)
+by(blast intro: le_trans)
+
 end
