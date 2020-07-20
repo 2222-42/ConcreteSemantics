@@ -497,4 +497,53 @@ Suc_leDでbackchainすることもできるが、
 前提が結論より複雑だから、backchainすることは非決定を導く
 *)
 
+subsection "4.5 Inductive Definitions"
+
+(* they are the key construct in the definition of operational semantics in the second part of the book *)
+
+subsubsection "4.5.1 An Example: Even Numbers"
+
+(* The operative word “inductive” means that these are the only even numbers *)
+(* In Isabelle we give the two rules the names `ev0` and `evSS` *)
+
+inductive ev :: "nat => bool" where
+ev0: "ev 0"|
+evSS: "ev n ==> ev(n + 2)"
+
+
+(* Rule Induction *)
+
+(* 全ての偶数が特定の性質を有していることの証明が難しい例 *)
+
+fun evn :: "nat => bool" where
+"evn 0 = True" |
+"evn (Suc 0) = False" |
+"evn (Suc (Suc n)) = evn n"
+
+(* prove ev m => evn m. 
+
+これはRule Inductionの(帰納法を使うという意味で)特殊なケース
+
+we want to prove a property P n for all even n. 
+But if we assume ev n, then there must be some derivation of this assumption using the two defining rules for ev:
+- Case ev0: P 0
+- Case evSS: \<lbrakk> ev n; P n\<rbrakk> => P (n + 2)
+.
+
+これに該当するルールは、`ev.induct`と呼ばれ、以下のようなものである
+  \<lbrakk> ev n, P 0, \<And> n. \<lbrakk> ev n ; P n \<rbrakk> ==> P(n + 2) \<rbrakk> ==> P n
+
+`ev n`が前提に入っているのは、
+- nがeven であることを知っている状態であることを要求している
+  - これによって、evSSのruleの前提を簡単にする
+
+帰納法の仮定がこの証明の全てにおいて要求しているわけではなく、
+evSSのケースの処理において、ev nを持っていることが本質的である。
+
+ルールのこのケース分析は "rule invension"と呼ばれ、chap 5で議論されている
+*)
+
+
+(* In Isabelle *)
+
 end
