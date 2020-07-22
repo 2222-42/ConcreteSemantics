@@ -508,7 +508,8 @@ subsubsection "4.5.1 An Example: Even Numbers"
 
 inductive ev :: "nat => bool" where
 ev0: "ev 0"|
-evSS: "ev n ==> ev(n + 2)"
+(* evSS: "ev n ==> ev(n + 2)" *)
+evSS: "ev n ==> ev(Suc(Suc n))"
 
 
 (* Rule Induction *)
@@ -546,4 +547,40 @@ evSSのケースの処理において、ev nを持っていることが本質的
 
 (* In Isabelle *)
 
+(* recast the above informal proofs in Isabelle. *)
+(* First, Suc terms instead of numerals in rule evSS *)
+
+(* The simplest way to prove ev (Suc (Suc (Suc (Suc 0)))) is in a forward
+direction: evSS[OF evSS[OF ev0]] yields the theorem ev (Suc (Suc (Suc(Suc 0)))). *)
+lemma "ev(Suc(Suc(Suc(Suc 0))))"
+apply(rule evSS)
+apply(rule evSS)
+apply(rule ev0)
+done
+
+(* Rule induction is applied by giving the induction rule explicitly via the rule: modifier: *)
+lemma "ev m ==> evn m"
+apply(induction rule: ev.induct)
+by(simp_all)
+
+(* Note that if there are multiple assumptions of the form ev t, method induction will induct on the leftmost one. *)
+
+lemma "evn n ==> ev n"
+apply(induction n rule: evn.induct)
+by(simp_all add: ev0 evSS)
+
+(* 
+`ev`のためのルールは、完璧な単純化と導入規則を作っている。
+  なぜなら、それらの前提は常に結論より小さいから。
+単純化と導入規則にそれらを永久的に変える場合に意味をなす
+  証明の自動化をよりよくするために
+
+Isabelleでは、 `ev.intros`と名付けられている。
+*)
+declare ev.intros[simp,intro]
+
+(* 
+帰納的な定義はデフォルトでは単純化規則ではない。
+  なぜなら、再帰的な関数とは異なり、帰納的定義には決定性の条件がないから
+*)
 end
