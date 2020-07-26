@@ -661,4 +661,18 @@ Iを含まないような追加の前提をもっているargumentsや規則を�
 `for` は反射的で推移的な閉包において、induction ruleを単純化するために用いられる。
 *)
 
+subsection "Exercises"
+
+(* Exercise 4.2 *)
+
+inductive palindrome :: "'a list => bool" where
+"palindrome []" |
+"palindrome [x]" |
+"palindrome xs ==> palindrome (a # xs @ [a])"
+
+lemma "palindrome xs ==> rev xs = xs"
+apply(induction rule:palindrome.induct)
+apply(auto)
+done
+
 end
