@@ -703,4 +703,22 @@ apply(rule refl')
 apply(simp add: step ext_star'_from_left)
 done
 
+(* Exercise 4.4. *)
+inductive iter :: "('a  => 'a => bool) => nat => 'a => 'a => bool" for r where
+iter_refl: "iter r n x x" |
+iter_step: "r x y ==> iter r n y z ==> iter r (Suc n) x z"
+
+(* r y z ==> ...という形ではダメ。from: Rule inductionは常にゴールの一番左のの前提に対して *)
+(* lemma ext_iter : "iter r n x y ==> r y z ==> iter r (Suc n) x z"
+apply(induction rule:iter.induct)
+apply() *)
+
+(* 問で、nについての説明が一切ないので、存在することを示すことにした。 *)
+(*  1. \<And>x y z. r x y \<Longrightarrow> star r y z \<Longrightarrow> iter r n y z \<Longrightarrow> iter r n x z *)
+lemma "star r x y ==> \<exists> n. iter r n x y"
+apply(induction rule: star.induct)
+apply(metis iter_refl)
+(* sledgehammer *)
+by (meson iter_step)
+
 end
