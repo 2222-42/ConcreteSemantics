@@ -744,6 +744,7 @@ by (simp add: SConct SDoubl)
 thm balanceT[OF emptyT]
 lemmas balanceT' = balanceT[OF emptyT, simplified]
 
+(* simpを使っている理由は、autoがsimpより多くのことをやるから *)
 lemma balance_composite_first: "T (w1 @ w2) ==> T w3 ==>  T (w1 @ w2 @ [a] @ w3 @ [b])"
 apply(simp)
 apply(rule balanceT[of "w1 @ w2" w3, simplified])

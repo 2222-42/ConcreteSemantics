@@ -80,12 +80,13 @@ side of the conclusion. It leads nontermination when to meet preconditions needs
 
 Here the modifiers are `simp add` and `simp del` instead of just `add` and `del`
 because `auto` does not just perform simplification
+`auto`はsimplificationを実行するだけではないから。
 *)
 
 (* 
 Notes:
-- `simp` acts only on subgoal 1, 
-- `auto` acts on all subgoals. 
+- `simp` acts simplification only on subgoal 1, 
+- `auto` acts simplification and try to prove on all subgoals. 
 - `simp_all` applies `simp` to all subgoals.
 *)
 
