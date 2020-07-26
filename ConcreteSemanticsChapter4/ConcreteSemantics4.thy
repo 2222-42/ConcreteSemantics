@@ -741,8 +741,8 @@ by (simp add: SConct SDoubl)
 
 (* cf: https://github.com/sergv/isabelle-playground/blob/master/Chapter4.thy *)
 (* この道具を使わないと、とても面倒な証明が要求されてしまう *)
-thm balanceT[OF emptyT]
-lemmas balanceT' = balanceT[OF emptyT, simplified]
+(* thm balanceT[OF emptyT]
+lemmas balanceT' = balanceT[OF emptyT, simplified] *)
 
 (* simpを使っている理由は、autoがsimpより多くのことをやるから *)
 lemma balance_composite_first: "T (w1 @ w2) ==> T w3 ==>  T (w1 @ w2 @ [a] @ w3 @ [b])"
@@ -768,6 +768,41 @@ apply(rule emptyT)
 using balanceT emptyT apply fastforce
 (* sledgehammer *)
 by (simp add: composite_T)
+
+(* Exercise 4.6. *)
+
+type_synonym vname = string
+datatype aexp = N int | V vname | Plus aexp aexp
+type_synonym val = int
+type_synonym state = "vname => val"
+
+fun aval :: "aexp => state => val" where
+"aval (N n) s = n" |
+"aval (V x) s = s x" |
+"aval (Plus a1 a2) s = aval a1 s + aval a2 s"
+
+inductive aval_rel' :: "aexp => state => val => bool" where
+ar_const: "aval_rel' (N n) s n" |
+ar_var: "s x = v ==> aval_rel' (V x) s v" |
+ar_plus: "aval_rel' a1 s n1 ==>  aval_rel' a2 s n2 ==> aval_rel' (Plus a1 a2) s (n1 + n2)"
+
+lemma aval_rel_is_consistent_with_aval : "aval_rel' exp s v ==> aval exp s = v"
+apply(induction rule: aval_rel'.induct)
+apply(auto)
+done
+
+lemma aval_is_consistent_with_aval_rel : "aval exp s = v ==> aval_rel' exp s v"
+apply(induction exp arbitrary: v)
+apply(simp add: ar_const)
+apply(simp add: ar_var)
+apply(simp add: ar_plus)
+(* sledgehammer *)
+by (meson aval_rel'.simps)
+
+corollary aval_and_aval_rel_is_equiv: "aval exp s = v \<longleftrightarrow> aval_rel' exp s v"
+(* sledgehammer *)
+ using aval_is_consistent_with_aval_rel aval_rel_is_consistent_with_aval by blast
+
 
 
 end
