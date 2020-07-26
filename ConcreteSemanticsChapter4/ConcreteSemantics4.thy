@@ -664,7 +664,6 @@ Iを含まないような追加の前提をもっているargumentsや規則を�
 subsection "Exercises"
 
 (* Exercise 4.2 *)
-
 inductive palindrome :: "'a list => bool" where
 "palindrome []" |
 "palindrome [x]" |
@@ -673,6 +672,35 @@ inductive palindrome :: "'a list => bool" where
 lemma "palindrome xs ==> rev xs = xs"
 apply(induction rule:palindrome.induct)
 apply(auto)
+done
+
+(* Exercise 4.3. *)
+inductive star' :: "( 'a => 'a => bool) => 'a => 'a => bool" for r where
+refl' : "star' r x x" |
+step' : "star' r x y ==> r y z ==> star' r x z"
+
+lemma "star' r x y ==> star r x y"
+apply(induction rule: star'.induct)
+apply(rule refl)
+ by (meson star.refl star.step star_trans)
+
+(* cf: https://github.com/sergv/isabelle-playground/blob/master/Chapter4.thy *)
+
+lemma star'_singleton : "r a b \<Longrightarrow> star' r a b"
+by(metis step' refl')
+
+(*  1. \<And>x. r x c \<Longrightarrow> star r x c *)
+lemma ext_star'_from_left : "star' r y z \<Longrightarrow> r x y \<Longrightarrow> star' r x z"
+apply(induction rule: star'.induct)
+apply(simp add:star'_singleton)
+(* sledgehammer *)
+by (meson step')
+
+(*  1. \<And>x y z. r x y \<Longrightarrow> star r y z \<Longrightarrow> star' r y z \<Longrightarrow> star' r x z *)
+lemma "star r x y ==> star' r x y"
+apply(induction rule: star.induct)
+apply(rule refl')
+apply(simp add: step ext_star'_from_left)
 done
 
 end
