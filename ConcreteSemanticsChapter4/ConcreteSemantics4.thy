@@ -614,4 +614,27 @@ Rule Induction はある証明にはよく合っている
 帰納的定義の方がよりシンプルである。
 *)
 
+subsubsection "4.5.2 The Reflexive Transitive Closure"
+
+(* 反射的で推移的閉包 `star` ：
+  binary predicateを別のbinary predicateに変換する
+*)
+
+inductive star :: "('a => 'a => bool) => 'a => 'a => bool" for r where
+refl: "star r x x" |
+step: "r x y ==> star r y z ==> star r x z"
+
+(* `for r` というのは、Isabelle に r は star において fixed parameter であることを教えるための者 *)
+
+(* 推移的(transitive)であることの証明 *)
+lemma star_trans: "star r x y ==> star r y z ==> star r x z"
+apply(induction rule: star.induct)
+(* autoを使わない理由は知らないが、多分、何を使うか分かり切っているからなのでは？ *)
+apply(assumption)
+(* sledgehammer *)
+(* by (simp add: star.step) *)
+(* テキストでmetisが使われているのは、straightforwarだから、と説明されている。 *)
+by (metis step)
+
+
 end
