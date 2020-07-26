@@ -721,4 +721,52 @@ apply(metis iter_refl)
 (* sledgehammer *)
 by (meson iter_step)
 
+(* Exercise 4.5. *)
+
+datatype alpha = a | b
+
+inductive S :: "alpha list => bool" where
+SEmpty: "S[]" |
+SConct: "S w ==> S (a # w @ [b])" |
+SDoubl: "S w1 ==> S w2 ==> S (w1@w2)"
+
+inductive T :: "alpha list => bool" where
+emptyT: "T[]" |
+balanceT: "T w1 ==> T w2 ==> T(w1@[a]@w2@[b])"
+
+lemma TtoS: "T w ==> S w"
+apply(induction rule: T.induct)
+apply(rule S.SEmpty)
+by (simp add: SConct SDoubl)
+
+(* cf: https://github.com/sergv/isabelle-playground/blob/master/Chapter4.thy *)
+(* この道具を使わないと、とても面倒な証明が要求されてしまう *)
+thm balanceT[OF emptyT]
+lemmas balanceT' = balanceT[OF emptyT, simplified]
+
+lemma balance_composite_first: "T (w1 @ w2) ==> T w3 ==>  T (w1 @ w2 @ [a] @ w3 @ [b])"
+apply(simp)
+apply(rule balanceT[of "w1 @ w2" w3, simplified])
+(* sledgehammer *)
+apply(auto)
+done
+
+(*  1. \<And>w1 w2a.
+       T w1 \<Longrightarrow>
+       T (w1 @ w2) \<Longrightarrow> T w2a \<Longrightarrow> T (w2a @ w2) \<Longrightarrow> T w2 \<Longrightarrow> T (w1 @ a # w2a @ b # w2) *)
+lemma composite_T : "T w2 ==> T w1 ==> T (w1 @ w2)"
+apply(induction arbitrary: w1 rule: T.induct)
+apply(simp)
+(* sledgehammer *)
+using balance_composite_first by auto
+
+(* 1. \<And>w1 w2. S w1 \<Longrightarrow> T w1 \<Longrightarrow> S w2 \<Longrightarrow> T w2 \<Longrightarrow> T (w1 @ w2) *)
+lemma StoT: "S w ==> T w"
+apply(induction rule: S.induct)
+apply(rule emptyT)
+using balanceT emptyT apply fastforce
+(* sledgehammer *)
+by (simp add: composite_T)
+
+
 end
