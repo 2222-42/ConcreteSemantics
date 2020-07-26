@@ -636,5 +636,29 @@ apply(assumption)
 (* テキストでmetisが使われているのは、straightforwarだから、と説明されている。 *)
 by (metis step)
 
+subsubsection "4.5.3 The General Case"
+
+(* Inductive な定義は以下のような一般形式をたいていの場合持っている
+  inductive I :: "t => bool" where
+そして、それに続くルールは以下のような形式を持っている(n がゼロの場合もある)
+  \<lbrakk> I a1; ... ; I an \<rbrakk> ==> I a
+また、これらのルールは `|` でわけられている。
+
+これに該当するrule induction は `I.induct` だり、これは、以下のような形式の命題に適用される
+  I x ==> P x
+
+Rule inductionは常にゴールの一番左のの前提に対してであり、よって、 `I x` は常に最初の前提でなければならない。
+
+`I x ==> P x` をrule inductionによって証明するというのは、Iのすべての規則に対して、Pが不変であるということ、つまり
+  \<lbrakk> I a1; P a1;... ; I an; P an \<rbrakk> ==> P a
+*)
+
+(* 
+Iを含まないような追加の前提をもっているargumentsや規則をもっている場合がある
+  これはside conditionsと呼ばれる
+    これは追加の前提として表れることがある
+
+`for` は反射的で推移的な閉包において、induction ruleを単純化するために用いられる。
+*)
 
 end
