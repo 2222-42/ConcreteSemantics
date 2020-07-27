@@ -803,6 +803,99 @@ corollary aval_and_aval_rel_is_equiv: "aval exp s = v \<longleftrightarrow> aval
 (* sledgehammer *)
  using aval_is_consistent_with_aval_rel aval_rel_is_consistent_with_aval by blast
 
+(* Exercise 4.7. *)
+datatype instr = LOADI val | LOAD vname | ADD
+(* type_synonym stack = "val list" *)
+(* sergvのを丸パクリしている *)
+datatype stack = Stack "val list"
 
+fun push :: "val \<Rightarrow> stack \<Rightarrow> stack" where
+"push x (Stack xs) = Stack (x # xs)"
+
+fun top :: "stack \<Rightarrow> val" where
+"top (Stack (x # _)) = x"
+
+fun top2 :: "stack \<Rightarrow> val" where
+"top2 (Stack (_ # x # _)) = x"
+
+fun drop2 :: "stack \<Rightarrow> stack" where
+"drop2 (Stack (_ # _ # xs)) = Stack xs"
+
+fun stack_length :: "stack \<Rightarrow> nat" where
+"stack_length (Stack xs) = length xs"
+
+fun exec1 :: "instr \<Rightarrow> state \<Rightarrow> stack \<Rightarrow> stack" where
+"exec1 (LOADI n) _ stk = push n stk"     |
+"exec1 (LOAD v)  s stk = push (s v) stk" |
+"exec1 ADD       _ stk = push (top stk + top2 stk) (drop2 stk)"
+
+fun exec :: "instr list \<Rightarrow> state \<Rightarrow> stack \<Rightarrow> stack" where
+"exec []       _ stk = stk" |
+"exec (i # is) s stk = exec is s (exec1 i s stk)"
+
+lemma exec_division: "exec (is1 @ is2) s stk = exec is2 s (exec is1 s stk )"
+apply(induction is1 arbitrary: stk)
+apply(auto)
+done
+
+inductive ok :: "nat => instr list => nat => bool" where
+ok_emp: "ok n [] n" |
+ok_LOADI: "ok n is m ==> ok n (is @ [LOADI _]) (Suc m)" |
+ok_LOAD: "ok n is m ==> ok n (is @ [LOAD _]) (Suc m)"|
+ok_ADD: "ok n is\<^sub>1 (Suc n) \<Longrightarrow> ok (Suc n) is\<^sub>2 (Suc (Suc n)) \<Longrightarrow> ok n (is\<^sub>1 @ is\<^sub>2 @ [instr.ADD]) (Suc n)" 
+
+thm ok.induct
+
+(* lemma "ok (length stk) is1 (Suc (Suc m)) ==> length (exec1 ADD s (exec is1 s stk)) = Suc m" *)
+
+lemma length_of_pushed_stack : "stack_length (push x stk) = Suc (stack_length stk)"
+apply(induction stk)
+apply(auto)
+done
+
+lemma length_of_twice_dropped_stack : "stack_length stk = Suc (Suc n) \<Longrightarrow> stack_length (drop2 stk) = n"
+apply(induction stk rule: drop2.induct)
+apply(simp_all)
+done
+
+(*  
+ 1. \<And>n is1 m is2 stk.
+       ok n is1 (Suc m) \<Longrightarrow>
+       (\<And>stk. length stk = n \<Longrightarrow> length (exec is1 s stk) = Suc m) \<Longrightarrow>
+       ok n is2 (Suc (Suc m)) \<Longrightarrow>
+       (\<And>stk. length stk = n \<Longrightarrow> length (exec is2 s stk) = Suc (Suc m)) \<Longrightarrow>
+       length stk = n \<Longrightarrow>
+       length (exec1 ADD s (exec is2 s (exec is1 s stk))) = Suc m
+*)
+(* 
+ 1. \<And>is1 m stk.
+       ok (length stk) is1 (Suc (Suc m)) \<Longrightarrow>
+       (\<And>stka.
+           length stka = length stk \<Longrightarrow> length (exec is1 s stka) = Suc (Suc m)) \<Longrightarrow>
+       length (exec1 ADD s (exec is1 s stk)) = Suc m
+*)
+lemma "\<lbrakk>ok n is n'; stack_length stk = n \<rbrakk> \<Longrightarrow> stack_length (exec is s stk) = n'"
+apply(induction arbitrary: stk rule: ok.induct)
+apply(simp)
+apply(simp_all only: exec_division exec.simps exec1.simps)
+apply(simp_all only: length_of_pushed_stack)
+apply(simp only: length_of_twice_dropped_stack)
+done
+
+(* Stackをval listのtype_synonymではなく、datatypeとして導入していることがなんでここまで作用するのかわからない *)
+
+fun comp :: "aexp => instr list" where
+"comp (N n) = [LOADI n]" |
+"comp (V x) = [LOAD x]" |
+"comp (Plus e1 e2) = comp e1 @ comp e2 @ [ADD]"
+
+theorem "ok n (comp x) (Suc n)"
+apply(induction x arbitrary: n)
+apply(simp_all)
+(* sledgehammer *)
+using ok_LOADI ok_emp apply fastforce
+using ok_LOAD ok_emp apply fastforce
+(* sledgehammer *)
+using ok_ADD by blast
 
 end
