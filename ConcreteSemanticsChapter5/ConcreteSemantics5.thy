@@ -162,5 +162,39 @@ assumes-showsの形で述べられたlemmaは
     よって、名付けることの必要性を除く。
 *)
 
+subsection "5.2 Proof Patterns"
+
+(* case analysis: 
+proof cases
+  これで排中律を使って証明している
+*)
+
+(* contradiction
+proof (rule ccontr)
+  これで二重否定除去則を使って証明
+*)
+
+(* quantified formulas:
+the step fix x introduces a locally fixed variable
+-> これで任意のxについて成り立つことを示す
+
+witness is some arbitrary term for which we can prove that it satisfies P.
+-> 一個でも見つけられればいいのだから
+*)
+
+(* 量化子からの導出・推論の仕方
+obtain stepでfiexed local variableを取ろう。
+*)
+
+lemma "\<not> surj (f :: 'a => 'a set)"
+proof
+  assume "surj f"
+  hence "\<exists>a. {x. x \<notin> f x} = f a" by (auto simp: surj_def)
+  then obtain a where "{x. x \<notin> f x} = f a" by blast
+  hence "a \<notin> f a \<longleftrightarrow> a \<in> f a" by blast 
+  thus "False" by blast
+qed
+
+(* 等式と包含関係の証明 *)
 
 end
