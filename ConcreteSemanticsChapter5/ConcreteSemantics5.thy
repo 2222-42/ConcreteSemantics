@@ -235,4 +235,29 @@ back quotesは、名前によってではなく、値によって、factに言�
 *)
 
 
+subsubsection "5.3.2 moreover"
+
+(* moreover: factになんらかの演繹をできるようにさせたい場合に使う
+
+e.g.,
+
+have lab1: "P1" <proof>
+have lab2: "P2" <proof>
+...
+have labn: "Pn" <proof>
+from lab1 lab2 ...
+have "P" <proof>
+という感じで、facts にラベル付けて、ではなく
+
+have "P1" <proof>
+moreover have "P2" <proof>
+moreover
+...
+moreover have "Pn" <proof>
+ultimately have "P" <proof>
+
+moreoverでこれらをつなげて証明する。
+  短くなるわけではないが、もうちょっと明快に構造を明らかにし、新たな名前を作るのを避けてくれる
+*)
+
 end
