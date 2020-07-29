@@ -197,4 +197,42 @@ qed
 
 (* 等式と包含関係の証明 *)
 
+
+subsection "5.3 Streamlining Proofs"
+
+subsubsection "5.3.1 Pattern Matching and Quotations"
+
+(* 式が重複している場合がある。これは可読性も、書きやすさも、保守しやすさも悪くなる 
+-> パターンマッチングを使おう
+
+show formula (is pattern)
+  この式が述べられている任意の場所でパターンマッチングは昨日する
+
+e.g., show "formula1 \<longleftrightarrow> formula2" (is "?L  \<longleftrightarrow> ?R")
+  こうすると、後に続く証明の中で、 "?L" "?R"が代わりに使えるようになる。
+
+e.g., show ?thesis
+  ?thesis は lemma や show で述べられた任意のゴールに暗黙的にマッチするものである。
+
+e.g., let ?t = "some-big-term"
+  unknowns も let でインスタンス化できる
+  こうすると後の証明ステップで ?t に言及することができる
+    e.g., have "... ?t ..."
+
+補足: 
+- factsの名前は、証明された定理に言及する
+- unknowsn ?Xは、項や式に言及する
+*)
+
+(* 名前は分かりやすくしような。長くてもいいから。 *)
+
+(* 
+have "x > 0"
+...
+from ‘x>0‘ . . .
+
+back quotesは、名前によってではなく、値によって、factに言及している。
+*)
+
+
 end
