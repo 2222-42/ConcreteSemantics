@@ -260,4 +260,29 @@ moreoverでこれらをつなげて証明する。
   短くなるわけではないが、もうちょっと明快に構造を明らかにし、新たな名前を作るのを避けてくれる
 *)
 
+
+subsubsection "5.3.3 Local Lemmas"
+
+(* 
+証明の中でなんらかの補題を証明したい場合
+  仮定の現在のコンテキストを共有する補題
+  だが、独自の仮定を持っており、そして最後にはローカルに固定された変数に関して一般化されているような補題
+  `have`の拡張
+
+    have B if name: A1 ... Am for x1 ... xn
+    <proof>
+*)
+
+
+
+lemma fixes a b :: int assumes "b dvd (a + b)" shows "b dvd a"
+proof - 
+  have "\<exists> k'. a = b * k'" if asm: "a + b = b * k" for k
+  proof
+    show "a = b*(k-1)" using int_distrib(4) that by auto
+  qed
+  thus ?thesis using assms by auto
+qed
+
+
 end
