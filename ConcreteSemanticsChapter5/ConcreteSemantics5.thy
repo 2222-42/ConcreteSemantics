@@ -331,4 +331,47 @@ next
 qed
 
 
+subsection "5.4 Case Analysis and Induction"
+
+subsubsection "5.4.1 Datatype Case Analysis"
+
+(* 前節ではformulasに対するケース分析だった。本節では、項の形式に関する分析 *)
+
+lemma "length(tl xs) = length xs - 1"
+proof (cases xs)
+  assume "xs = []"
+  then show ?thesis by simp
+next
+  fix y ys assume "xs = y # ys"
+  then show ?thesis by simp
+qed
+
+lemma "length(tl xs) = length xs - 1"
+proof (cases xs)
+  case Nil
+  then show ?thesis by simp
+next
+  case (Cons a list)
+  then show ?thesis by simp
+qed
+
+subsubsection "5.4.2 Structural Induction"
+
+lemma "\<Sum>{0..n::nat} = n*(n+1) div 2"
+proof(induction n)
+  case 0
+  show ?case by simp
+next
+  case (Suc n)
+  then show ?case by simp
+qed
+
+lemma "\<Sum>{0..n::nat} = n*(n+1) div 2" (is "?P n")
+proof(induction n)
+  show "?P 0" by simp
+next 
+  fix n assume "?P n"
+  then show "?P (Suc n)" by simp
+qed
+
 end
