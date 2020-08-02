@@ -374,4 +374,35 @@ next
   then show "?P (Suc n)" by simp
 qed
 
+subsubsection "5.4.3 Rule Induction"
+
+inductive ev :: "nat => bool" where
+ev0: "ev 0"|
+evSS: "ev n ==> ev(Suc(Suc n))"
+
+fun evn :: "nat => bool" where
+"evn 0 = True" |
+"evn (Suc 0) = False" |
+"evn (Suc (Suc n)) = evn n"
+
+lemma "ev n ==> evn n"
+proof(induction rule: ev.induct)
+  case ev0
+  then show ?case by simp
+next
+  case evSS 
+  then show ?case by simp
+qed
+
+(* case of referring to m *)
+lemma "ev n ==> evn n"
+proof(induction rule: ev.induct)
+  case ev0 show ?case by simp
+next
+  case (evSS m)
+  have "evn(Suc(Suc m)) = evn m" by simp
+  thus ?case by (simp add: evSS.IH)
+  (* thus ?case by simp *)
+qed
+
 end
