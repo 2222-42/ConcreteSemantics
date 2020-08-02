@@ -190,6 +190,8 @@ ultimately have "P" <proof>
 
 ### case
 
+#### Assumption Naming
+
 `case name` は `name`と呼ばれる仮定のリストを用意する、以下の3つの部分に細分化される
 - `name.IH`: 帰納法の仮定を含む
 - `name.hyps`: 他の仮定を含む。帰納的なものであれば、各規則のルール。構造的なものであればなし。
@@ -266,3 +268,15 @@ qed
 ```
 
 rule iに対して自由変数を左から順に明示的に当てることもできる
+
+#### Rule Inversion
+
+逆向きの証明：
+いずれのルールによって、与えられた事実が証明しうるか？
+e.g.,
+  `ev n ==> n = 0 \<or> (\<exists> k. n = Suc (Suc k) \<and> ev k)`
+
+Impossible cases do not have to be proved. Hence we can prove anything from ev (Suc 0):
+```
+assume "ev(Suc 0)" then have P by cases
+```

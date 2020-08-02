@@ -407,6 +407,44 @@ qed
 
 subsubsection "5.4.4 Assumption Naming"
 
+subsubsection "5.4.5 Rule Inversion"
+
+(* 何かのfactを導くのに使われうるような規則の分析 *)
+(* 逆向きの証明：
+いずれのルールによって、与えられた事実が証明しうるか？
+e.g.,
+  ev n ==> n = 0 \<or> (\<exists> k. n = Suc (Suc k) \<and> ev k)
+*)
+
+(* assume "ev n"
+from this have "ev(n-2)"
+proof cases
+  case ev0 thus ?thesis by (simp add: ev.ev0)
+next
+  case (evSS k) thus ?thesis by (simp add: ev.evSS)
+qed *)
+
+(* some rules could not have been used to derive the given fact
+because constructors clash *)
+(* Impossible cases do not have to be proved.
+  assume "ev(Suc 0)" then have P by cases
+*)
+lemma "\<not> ev(Suc 0)"
+proof
+assume "ev(Suc 0)" then show False by cases
+qed
+
+subsubsection "Exercise"
+
+(* Exercise 5.4. *)
+lemma "\<not> ev(Suc(Suc(Suc 0)))"
+proof
+  assume "ev(Suc(Suc(Suc 0)))" 
+  then show False
+  proof cases
+    assume "ev(Suc 0)" thus ?thesis by cases
+  qed
+qed
 
 
 end
