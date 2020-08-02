@@ -188,7 +188,19 @@ moreover have "Pn" <proof>
 ultimately have "P" <proof>
 ```
 
-### Datatype case analysis
+### case
+
+`case name` は `name`と呼ばれる仮定のリストを用意する、以下の3つの部分に細分化される
+- `name.IH`: 帰納法の仮定を含む
+- `name.hyps`: 他の仮定を含む。帰納的なものであれば、各規則のルール。構造的なものであればなし。
+- `name.prems`: 証明されるステートメントの全体を含む。
+
+`induct`は`IH`を`hyps`から区別しないが、`hyps`のもとで`IH`を包摂している。
+
+複数の特定の仮定により多く言及するような、より複雑な帰納的証明の場合がある。
+こおんために、事実のリストのインデックス化(`name.IH(2)`や`name.prems(1-2)`)がなされている。
+
+#### Datatype case analysis
 
 ```
 proof (cases xs)
