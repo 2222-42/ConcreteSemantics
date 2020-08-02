@@ -204,7 +204,7 @@ case (C x 1 ... x n)
 ```
 、それぞれについて証明されることが、datatypeの証明のパターンである。
 
-#### induction case
+#### Structural induction case
 
 ```
 proof (induction n)
@@ -227,3 +227,30 @@ command `case (C x1 ... xn)`が実行していること
 1. `fix x 1 ... x n`
 2. `assume` the induction hypotheses ( `C.IH` と呼ばれる) と the premises　`A_i(C x 1 ... x n)` ( `C.prems`と呼ばれる) and calling the whole list C
 3. `let ?case = "P(C x 1 ... x n)"`
+
+#### Rule Induction case
+
+Structural Inductionとは異なりRule Induction は、
+- 明示的に与えられ
+- ケースの名前は帰納的定義におけるルールの名前が使われうる
+
+
+Rule Inductinによる証明のパターンは以下の通り:
+```
+show "I x =) P x"
+proof(induction rule: I.induct)
+  case rule_1 ...
+  show ?case <proof>
+next
+...
+next 
+  case (rule_i x 1 ... x k)
+  show ?case <proof>
+...
+next
+  case rule_n ...
+  show ?case <proof>
+qed
+```
+
+rule iに対して自由変数を左から順に明示的に当てることもできる
