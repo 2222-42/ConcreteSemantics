@@ -190,6 +190,9 @@ ultimately have "P" <proof>
 
 ### case
 
+The `cases` method tries to pick the right case analysis rule based on "given facts". 
+Given facts are those that that you provide using `then` or `from` or `using`.
+
 #### Assumption Naming
 
 `case name` は `name`と呼ばれる仮定のリストを用意する、以下の3つの部分に細分化される

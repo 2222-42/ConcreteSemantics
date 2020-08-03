@@ -464,6 +464,22 @@ qed
 
 subsubsection "Exercise"
 
+(* Exercise 5.3. *)
+(* Give a structured proof by rule inversion: *)
+lemma assumes a: "ev(Suc(Suc n))" shows "ev n"
+proof -
+  (* assume "ev m"
+  from this a have "ev (m -2)"
+  proof cases
+    case ev0
+    then show ?thesis by (simp add: ev.ev0)
+  next
+    case (evSS k)
+    then show ?thesis by (simp add: ev.evSS)
+  qed *)
+  from a show ?thesis by cases
+qed
+
 (* Exercise 5.4. *)
 lemma "\<not> ev(Suc(Suc(Suc 0)))"
 proof
