@@ -434,6 +434,34 @@ proof
 assume "ev(Suc 0)" then show False by cases
 qed
 
+subsubsection "5.4.6 Advanced Rule Induction"
+
+(* `I r s t ==> ...`で、r, s, tが変数ではない場合、証明することができない。
+どうするか。
+`"I x y z ==> x = r ==> y = s ==> z = t ==> ..."`
+として、新たな変数x, y, zを導入して、標準的な形式にする。
+
+proof(induction "r" "s" "t" arbitrary: ... rule: I.induct)
+*)
+
+lemma "ev(Suc m) ==> \<not> ev m"
+proof(induction "Suc m" arbitrary: m rule: ev.induct)
+  fix n assume IH: "\<And> m. n = Suc m ==> \<not> ev m"
+  (* `ev x ==> x = Suc m ==> \<not> ev m` に至るように拡張されている *)
+  show "\<not> ev (Suc n)"
+  proof 
+  (* using contradiction *)
+    assume "ev(Suc n)"
+    thus False
+    proof cases
+    (* using rule inversion *)
+      fix k assume "n = Suc k" "ev k"
+      thus False using IH by auto
+    qed
+  qed
+qed
+
+
 subsubsection "Exercise"
 
 (* Exercise 5.4. *)

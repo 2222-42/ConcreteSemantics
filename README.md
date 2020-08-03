@@ -248,10 +248,9 @@ Structural Inductionとは異なりRule Induction は、
 - 明示的に与えられ
 - ケースの名前は帰納的定義におけるルールの名前が使われうる
 
-
-Rule Inductinによる証明のパターンは以下の通り:
+Rule Inductinによる証明のパターンは以下の通り(Iは帰納的に定義された述語):
 ```
-show "I x =) P x"
+show "I x ==> P x"
 proof(induction rule: I.induct)
   case rule_1 ...
   show ?case <proof>
@@ -267,7 +266,18 @@ next
 qed
 ```
 
-rule iに対して自由変数を左から順に明示的に当てることもできる
+`case (rule_i x 1 ... x k)`によってrule iに対して自由変数を左から順に明示的に当てることもできる
+
+Rule Inductionは、 `I x y z ==> ....` という形式のゴールに対して適用される。
+
+##### Advanced Rule Induction
+
+`I r s t ==> ...`で、r, s, tが変数ではない場合、証明することができない。
+どうするか。
+`"I x y z ==> x = r ==> y = s ==> z = t ==> ..."`
+として、新たな変数x, y, zを導入して、標準的な形式にする。
+
+`proof(induction "r" "s" "t" arbitrary: ... rule: I.induct)`
 
 #### Rule Inversion
 
@@ -280,3 +290,5 @@ Impossible cases do not have to be proved. Hence we can prove anything from ev (
 ```
 assume "ev(Suc 0)" then have P by cases
 ```
+
+(不可能なケースだったら明示しなくていい(Isabelleはわかっている))
