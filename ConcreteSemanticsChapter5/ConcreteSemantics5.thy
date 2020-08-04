@@ -490,5 +490,22 @@ proof
   qed
 qed
 
+(* Exercise 5.5. *)
+inductive star :: "('a => 'a => bool) => 'a => 'a => bool" for r where
+refl: "star r x x" |
+step: "r x y ==> star r y z ==> star r x z"
+
+inductive iter :: "('a  => 'a => bool) => nat => 'a => 'a => bool" for r where
+iter_refl: "iter r n x x" |
+iter_step: "r x y ==> iter r n y z ==> iter r (Suc n) x z"
+
+lemma "iter r n x y ==> star r x y"
+proof(induction rule: iter.induct)
+  case (iter_refl n x)
+  then show ?case by (simp add:star.refl)
+next
+  case (iter_step x y n z)
+  then show ?case by (simp add: star.step)
+qed
 
 end
