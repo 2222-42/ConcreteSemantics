@@ -508,4 +508,38 @@ next
   then show ?case by (simp add: star.step)
 qed
 
+(* Exercise 5.6 *)
+fun elems :: "'a list => 'a set" where
+"elems [] = {}" |
+"elems (x#xs) = {x} \<union> elems xs"
+
+lemma "elems [1,2,3,(4::nat)] = {1,2,3,4}" (*<*)by auto(*>*)
+
+(* elems is recursive function *)
+lemma "x \<in> elems xs ==> \<exists> ys zs. xs = ys @ x # zs \<and> x \<notin> elems ys" (is "?A ==> ?B")
+(* proof (induction xs rule: elems.induct) *)
+
+proof(induction xs)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a xs)
+  then show ?case 
+  proof cases
+    assume x_is_a: "x = a"
+    then obtain zs where "x#zs = a#xs" by blast
+    let ?ys = "[]"
+    have "x \<notin> elems ?ys" by simp
+    then show ?thesis using x_is_a by blast
+  next
+    assume x_is_not_a: "x \<noteq> a"
+    from Cons this obtain ys zs where ys: "xs = ys @ x # zs" "x \<notin> elems ys" by auto
+    show ?thesis 
+    proof
+      show "\<exists>zs. a # xs = (a # ys) @ x # zs \<and> x \<notin> elems (a # ys)"
+        using ys x_is_not_a by simp
+    qed
+  qed
+qed
+
 end

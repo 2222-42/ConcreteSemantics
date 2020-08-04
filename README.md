@@ -113,6 +113,8 @@ fact = name | ...
 
 `using` は、proposition の後ろに facts を動かすことで、facts を強調しなくする
 
+`with`は結構使える。
+
 #### fixes
 
 - fixes part: 
