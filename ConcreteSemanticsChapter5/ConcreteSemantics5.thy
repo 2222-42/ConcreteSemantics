@@ -542,4 +542,86 @@ next
   qed
 qed
 
+(* Exercise 5.7. *)
+datatype alpha = a | b
+
+inductive S :: "alpha list => bool" where
+SEmpty: "S[]" |
+SConct: "S w ==> S (a # w @ [b])" |
+SDoubl: "S w1 ==> S w2 ==> S (w1@w2)"
+
+inductive T :: "alpha list => bool" where
+emptyT: "T[]" |
+balanceT: "T w1 ==> T w2 ==> T(w1@[a]@w2@[b])"
+
+fun balanced :: "nat => alpha list => bool" where
+"balanced 0 [] = True" |
+"balanced n (a#xs) = balanced (Suc n) xs" |
+"balanced (Suc n) (b # xs) = balanced n xs" |
+"balanced _ _ = False"
+
+lemma [simp]: "balanced n w ==> balanced (Suc n) (w @ [b])"
+apply (induct n w rule: balanced.induct)
+apply simp_all
+done
+
+lemma [simp]: "\<lbrakk> balanced n v; balanced 0 w \<rbrakk> \<Longrightarrow> balanced n (v @ w) "
+apply (induct n v rule: balanced.induct)
+apply simp_all
+done
+
+(* value "replicate 3 a" *)
+
+lemma "S w ==> balanced 0 w"
+apply(erule S.induct)
+apply(simp_all)
+done
+
+lemma [iff]: "S[a,b]"
+using SConct[where w = "[]"] by (simp add: SEmpty)
+
+lemma ab: 
+  assumes u: "S u"
+  shows "\<And> v w. u = v @ w ==> S(v @ a # b # w)"
+using u
+proof(induct)
+  case SEmpty
+  then show ?case by simp
+next
+  case (SConct w)
+  have Su:"S u" and
+       IH: "\<And> v w. u = v @ w ==> S(v @ a # b # w)" and
+       asm: "a # u @ [b] = v @ w" sorry
+  show "S(v @ a # b # w)" sorry
+next
+  case (SDoubl w1 w2)
+  then show ?case sorry
+qed
+
+lemma
+  "balanced n w ==> S (replicate n a @ w)"
+apply(induct n w rule: balanced.induct)
+apply(simp_all)
+apply (simp add: SEmpty)
+apply(simp add: replicate_app_Cons_same)
+by (metis ab replicate_app_Cons_same)
+
+(* proof (induction n w rule: balanced.induct)
+  case 1
+  then show ?case  by (simp add: SEmpty) 
+next
+  case (2 n xs)
+  then show ?case by (simp add: replicate_app_Cons_same)
+next
+  case (3 n xs)
+  then show ?case sledgehammer
+next
+  case ("4_1" v)
+  then show ?case sorry
+next
+  case ("4_2" va)
+  then show ?case sorry
+qed *)
+
+
 end
