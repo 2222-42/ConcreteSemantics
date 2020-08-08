@@ -616,8 +616,23 @@ next
   qed
 next
   case (SDoubl v' w')
-
-  then show ?case sorry
+  have Sv': "S v'" and Sw': "S w'"
+   and IHv: "\<And> v w. v' = v @ w ==> S(v @ a # b # w)"
+   and IHw: "\<And> v w. w' = v @ w ==> S(v @ a # b # w)"
+   and asm: "v' @ w' = v @ w" by fact+
+  then obtain r where "v' = v @ r \<and> r @ w' = w \<or> v' @ r = v \<and> w' = r @ w" (is "?A \<or> ?B") by (meson append_eq_append_conv2)
+  thus ?case 
+  proof
+    assume A: ?A
+    hence "S(v @ a # b # r)" using IHv by simp
+    hence "S((v @ a # b # r) @ w')" using Sw' using S.SDoubl by blast
+    thus ?thesis using A by auto
+  next
+    assume B: ?B
+    hence "S(r @ a # b # w)" using IHw by blast
+    hence "S(v' @ (r @ a # b # w))" using Sv' using S.SDoubl by blast
+    thus ?thesis using B by auto
+  qed
 qed
 
 lemma
