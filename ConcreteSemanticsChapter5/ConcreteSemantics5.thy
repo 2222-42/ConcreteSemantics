@@ -571,7 +571,7 @@ apply simp_all
 done
 
 (* value "replicate 3 a" *)
-
+(* cf: https://isabelle.in.tum.de/exercises/logic/parentheses/sol.pdf *)
 lemma "S w ==> balanced 0 w"
 apply(erule S.induct)
 apply(simp_all)
@@ -588,13 +588,35 @@ proof(induct)
   case SEmpty
   then show ?case by simp
 next
-  case (SConct w)
+  case (SConct u)
   have Su:"S u" and
        IH: "\<And> v w. u = v @ w ==> S(v @ a # b # w)" and
-       asm: "a # u @ [b] = v @ w" sorry
-  show "S(v @ a # b # w)" sorry
+       asm: "a # u @ [b] = v @ w" by fact+
+  show "S(v @ a # b # w)" 
+  proof (cases v)
+    case Nil
+    hence "w = a # u @ [b]" using asm by simp
+    hence "S w" by (simp add: S.SConct Su)
+    hence "S ([a,b]@w)" using SDoubl by blast
+    then show ?thesis  by (simp add: local.Nil)
+  next
+    case (Cons x v')
+    show ?thesis
+    proof (cases w rule:rev_cases)
+      case Nil
+      from Su have "S ((a # u @ [b]) @ [a, b])" using S.SConct SDoubl by blast
+      then show ?thesis by (simp add: asm local.Nil)
+    next
+      case (snoc w' y)
+      hence u: "u = v' @ w'" and [simp]: "x = a & y = b" using asm local.Cons by auto
+      from u have "S(v' @ a # b # w')" by(rule IH)
+      hence "S(a # (v' @ a # b # w') @ [b])" using S.SConct by blast
+      then show ?thesis by (simp add: local.Cons snoc)
+    qed
+  qed
 next
-  case (SDoubl w1 w2)
+  case (SDoubl v' w')
+
   then show ?case sorry
 qed
 
