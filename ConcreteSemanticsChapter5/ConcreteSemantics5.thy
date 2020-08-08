@@ -572,7 +572,7 @@ done
 
 (* value "replicate 3 a" *)
 (* cf: https://isabelle.in.tum.de/exercises/logic/parentheses/sol.pdf *)
-lemma "S w ==> balanced 0 w"
+lemma [simp]: "S w ==> balanced 0 w"
 apply(erule S.induct)
 apply(simp_all)
 done
@@ -642,6 +642,53 @@ apply(simp_all)
 apply (simp add: SEmpty)
 apply(simp add: replicate_app_Cons_same)
 by (metis ab replicate_app_Cons_same)
+
+(*  
+1. \<And>n xs.
+       (S (replicate n a @ xs) \<Longrightarrow> balanced n xs) \<Longrightarrow>
+       S (a # replicate n a @ b # xs) \<Longrightarrow> balanced n xs
+ 2. \<And>v. S (a # replicate v a) \<Longrightarrow> False
+ 3. \<And>va. S (b # va) \<Longrightarrow> False
+ *)
+
+(* lemma "S (replicate n a @ w) ==> balanced n w"
+apply(induct n w rule: balanced.induct)
+apply(simp_all)
+apply(simp add: replicate_app_Cons_same)
+sledgehammer *)
+
+lemma "S (replicate n a @ w) ==> balanced n w"
+proof(induction n w rule: balanced.induct)
+  case 1
+  then show ?case by simp
+next
+  case (2 n xs)
+  then show ?case by (simp add: replicate_app_Cons_same) 
+next
+  case (3 n xs)
+  (* \<And>n xs.
+       (S (replicate n a @ xs) \<Longrightarrow> balanced n xs) \<Longrightarrow>
+       S (replicate (Suc n) a @ b # xs) \<Longrightarrow> balanced (Suc n) (b # xs) *)
+  have IH: "S (replicate n a @ xs) \<Longrightarrow> balanced n xs"
+   and asm: "S (replicate (Suc n) a @ b # xs)" by fact+
+
+  then show "balanced (Suc n) (b # xs)" sorry
+next
+  case ("4_1" v)
+  (* \<And>v. S (replicate (Suc v) a @ []) \<Longrightarrow> balanced (Suc v) [] *)
+  have asm: "S (replicate (Suc v) a @ []) " by fact+
+  
+  then show "balanced (Suc v) []" sorry
+next
+  case ("4_2" va)
+  (* \<And>va. S (replicate 0 a @ b # va) \<Longrightarrow> balanced 0 (b # va) *)
+  have asm: "S (replicate 0 a @ b # va)" by fact+
+  
+  show "balanced 0 (b # va)" sorry
+qed
+
+
+
 
 (* proof (induction n w rule: balanced.induct)
   case 1
