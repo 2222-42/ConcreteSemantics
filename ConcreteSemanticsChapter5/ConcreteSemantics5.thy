@@ -565,7 +565,7 @@ apply (induct n w rule: balanced.induct)
 apply simp_all
 done
 
-lemma [simp]: "\<lbrakk> balanced n v; balanced 0 w \<rbrakk> \<Longrightarrow> balanced n (v @ w) "
+lemma balanced_concat[simp]: "\<lbrakk> balanced n v; balanced 0 w \<rbrakk> \<Longrightarrow> balanced n (v @ w) "
 apply (induct n v rule: balanced.induct)
 apply simp_all
 done
@@ -580,6 +580,12 @@ done
 lemma [iff]: "S[a,b]"
 using SConct[where w = "[]"] by (simp add: SEmpty)
 
+lemma replicate_split: "m < n \<Longrightarrow> replicate n x = replicate m x @ replicate (n - m) x"
+  by (metis add_diff_inverse_nat less_imp_not_less replicate_add)
+
+lemma append_split: "length cs < length as \<Longrightarrow> as @ bs = cs @ ds \<Longrightarrow> \<exists>es. as = cs @ es"
+  by (metis add_diff_inverse_nat append_Nil2 append_eq_append_conv_if
+            drop_all length_drop less_imp_not_less)
 lemma ab: 
   assumes u: "S u"
   shows "\<And> v w. u = v @ w ==> S(v @ a # b # w)"
@@ -692,18 +698,43 @@ next
     then show ?thesis by (metis Nil_is_append_conv alpha.distinct(1) append_self_conv asm empty_replicate last_ConsR last_replicate last_snoc list.discI)
   next
     case (snoc ys y)
-    then show ?thesis sorry
+    (* hence "S (replicate n a @ ys @ [y])" sorry *)
+    (* hence "balanced n ys" sledgehammer *)
+    hence u: "u = replicate n a @ ys" sorry
+    have "balanced n ((a # b # ys) @ [b])" using asm snoc u by auto
+    then show ?thesis  using asm snoc by auto
   qed
 
 next
   case (SDoubl w1 w2)
-(* \<And>w1 w2 n w.
-       S w1 \<Longrightarrow>
-       (\<And>n w. w1 = replicate n a @ w \<Longrightarrow> balanced n w) \<Longrightarrow>
-       S w2 \<Longrightarrow>
-       (\<And>n w. w2 = replicate n a @ w \<Longrightarrow> balanced n w) \<Longrightarrow>
-       w1 @ w2 = replicate n a @ w \<Longrightarrow> balanced n w *)
-  then show ?case sorry
+  have Sw1: "S w1" and Sw2: "S w2"
+   and IHw1: "\<And>n w. w1 = replicate n a @ w \<Longrightarrow> balanced n w"
+   and IHw2: "\<And>n w. w2 = replicate n a @ w \<Longrightarrow> balanced n w"
+   and assm: "w1 @ w2 = replicate n a @ w" by fact+
+  then have "w1 = [] \<or> w1 \<noteq> []" by simp
+  then show "balanced n w" 
+  proof 
+    assume w1_is_nil: "w1 = []"
+    show "balanced n w" using IHw2 w1_is_nil assm by auto
+  next
+    assume w1_is_not_nil: "w1 \<noteq> []"
+    show "balanced n w" 
+    proof cases
+      (* impossible case *)
+      assume "n > length w1"
+      then have "w1 @ w2 = replicate (length w1) a @ replicate (n - length w1) a @ w" by (simp add: assm replicate_split)
+      then have "w1 = replicate (length w1) a" by simp
+      then have False using w1_is_not_nil by (metis IHw1 append.right_neutral balanced.simps(4) gr0_implies_Suc linorder_neqE_nat not_less0 replicate_empty)
+      show "balanced n w" by (metis IHw1 \<open>w1 = replicate (length w1) a\<close> append_Nil2 balanced.simps(4) gr0_conv_Suc linorder_neqE_nat not_less0 replicate_empty w1_is_not_nil)
+    next
+      assume "\<not> (n > length w1)"
+      then obtain z where z: "w1 = replicate n a @ z" using assm append_split by (metis append.right_neutral append_eq_append_conv length_replicate linorder_neqE_nat)
+      then have left: "balanced n z" using IHw1 by blast
+      have right: "balanced 0 w2" using IHw2 by simp
+      have w: "w = z @ w2" using z assm by simp
+      from left right w show "balanced n w" using balanced_concat by simp
+    qed
+  qed
 qed
 
 (* 
