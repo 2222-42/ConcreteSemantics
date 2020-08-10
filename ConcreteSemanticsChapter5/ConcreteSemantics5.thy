@@ -651,30 +651,9 @@ apply (simp add: SEmpty)
 apply(simp add: replicate_app_Cons_same)
 by (metis ab replicate_app_Cons_same)
 
-(* lemma "S (b # va) \<Longrightarrow> \<not> balanced 0 va"
-sledgehammer *)
-
-(* lemma "S (replicate n a @ w) ==> balanced n w"
-apply(induct n w rule: balanced.induct)
-apply(simp_all)
-apply(simp add: replicate_app_Cons_same)
-sorry *)
-
-(* lemma 
-  fixes v
-  assumes "S v"
-  shows "\<And>n w. (v = replicate n a @ w) \<Longrightarrow> balanced n w"
-proof (induct)
-  case a
-  fix n w
-  (* \<And>n w. v = replicate n a @ w \<Longrightarrow> balanced n w *)
-  then show ?case sorry
-next
-  case b
-  (* \<And>n w. v = replicate n b @ w \<Longrightarrow> balanced n w *)
-  then show ?case sorry
-qed *)
-
+(* most of the part is derived from AtnNn:
+ref: https://gist.github.com/AtnNn/dc6def74ab66c2d793077894d7b951e1#file-chatper4-thy-L17
+*)
 lemma s_to_b:
   fixes n w
   assumes Sv: "S v"
@@ -704,17 +683,6 @@ next
     then have "balanced nat y" using IH by blast
     then show ?thesis using Suc \<open>y @ [b] = w\<close> balanced_wrap by blast
   qed
-  (* proof (cases w rule:rev_cases)  
-    case Nil
-    then show ?thesis by (metis Nil_is_append_conv alpha.distinct(1) append_self_conv asm empty_replicate last_ConsR last_replicate last_snoc list.discI)
-  next
-    case (snoc ys y)
-    (* hence "S (replicate n a @ ys @ [y])" sorry *)
-    (* hence "balanced n ys" sledgehammer *)
-    hence u: "u = replicate n a @ ys" sorry
-    have "balanced n ((a # b # ys) @ [b])" using asm snoc u by auto
-    then show ?thesis  using asm snoc by auto
-  qed *)
 
 next
   case (SDoubl w1 w2)
@@ -747,91 +715,6 @@ next
     qed
   qed
 qed
-
-(* 
-proof (cases w)
-    case Nil
-    (* hence "w = a # u @ [b]" using asm by simp
-    hence "S w" by (simp add: S.SConct Su)
-    hence "S ([a,b]@w)" using SDoubl by blast *)
-    then show ?thesis  by (metis Nil_is_append_conv alpha.distinct(1) append_Nil2 asm empty_replicate last_ConsR last_replicate last_snoc list.discI)
-  next
-    case (Cons x v')
-    (* w = x # v' *)
-    (* 
-    "a # u @ [b] = replicate n a @ w"
-    "a # u @ [b] = replicate n a @ x # v'"
-    *)
-    (* have sub: "S(replicate n a @ x # v')" using S.SConct Su asm local.Cons by fastforce
-    then have u: "a # u @ [b] = replicate n a @ x # v'" using asm local.Cons by blast *)
-    have "u = replicate n a @ v'" sledgehammer
-    then have "balanced n w" by (rule IH)
-    then show ?thesis sledgehammer
-    (* proof -
-
-
-      (* have "S(w)" using "0" S.SConct asm Su by auto *)
-      have "a # u @ [b] = replicate n a @ w" by (simp add: asm)
-      have "S(a # u @ [b])" by (simp add: S.SConct Su)
-      hence "balanced n w" by (rule IH)
-      (* hence "u = replicate n a @ w ==> balanced n w" using IH by blast  *)
-      
-      then show "balanced n w" sorry
-       (*balanced n w  *)
-      (* then show ?thesis sorry *)
-    (* next
-      case (Suc nat)
-      then show ?thesis sorry *)
-    qed *)
-  qed
-*)
-
-(* lemma "S(replicate n a @ w) \<Longrightarrow> balanced n w"
-(* lemma 
-  fixes v
-  assumes Sv: "S v"
-  shows "\<And>n w. (v = replicate n a @ w) \<Longrightarrow> balanced n w" *)
-proof (induction rule: S.induct)
-  case SEmpty
-  then show ?case sorry
-next
-  case (SConct w)
-  then show ?case sorry
-next
-  case (SDoubl w1 w2)
-  then show ?case sorry
-qed *)
-(* 
-lemma "S(replicate n a @ w) \<Longrightarrow> balanced n w"
-proof(induction n w rule: balanced.induct)
-  case 1
-  then show ?case by simp
-next
-  case (2 n xs)
-  then show ?case by (simp add: replicate_app_Cons_same) 
-next
-  case (3 n xs)
-  (* \<And>n xs.
-       (S (replicate n a @ xs) \<Longrightarrow> balanced n xs) \<Longrightarrow>
-       S (replicate (Suc n) a @ b # xs) \<Longrightarrow> balanced (Suc n) (b # xs) *)
-  have IH: "S (replicate n a @ xs) \<Longrightarrow> balanced n xs"
-   and asm: "S (replicate (Suc n) a @ b # xs)" by fact+
-  (* hence "S(replicate n a @ xs)" and "S(replicate 1 a @ [b])" sledgehammer *)
-  then show "balanced (Suc n) (b # xs)" sorry
-next
-  case ("4_1" v)
-  (* \<And>v. S (replicate (Suc v) a @ []) \<Longrightarrow> balanced (Suc v) [] *)
-  have asm: "S (replicate (Suc v) a @ []) " by fact+
-  
-  then show "balanced (Suc v) []" sorry
-next
-  case ("4_2" va)
-  (* \<And>va. S (replicate 0 a @ b # va) \<Longrightarrow> balanced 0 (b # va) *)
-  have asm: "S (replicate 0 a @ b # va)" by fact+
-  
-  show "balanced 0 (b # va)" sorry
-qed
-*)
 
 theorem "balanced n w = S (replicate n a @ w)" (is "?L = ?R")
 proof
