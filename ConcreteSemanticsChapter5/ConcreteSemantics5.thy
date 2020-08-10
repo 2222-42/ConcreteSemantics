@@ -560,7 +560,7 @@ fun balanced :: "nat => alpha list => bool" where
 "balanced (Suc n) (b # xs) = balanced n xs" |
 "balanced _ _ = False"
 
-lemma [simp]: "balanced n w ==> balanced (Suc n) (w @ [b])"
+lemma balanced_wrap [simp]: "balanced n w ==> balanced (Suc n) (w @ [b])"
 apply (induct n w rule: balanced.induct)
 apply simp_all
 done
@@ -643,7 +643,7 @@ next
   qed
 qed
 
-lemma
+lemma b_to_s:
   "balanced n w ==> S (replicate n a @ w)"
 apply(induct n w rule: balanced.induct)
 apply(simp_all)
@@ -675,7 +675,7 @@ next
   then show ?case sorry
 qed *)
 
-lemma 
+lemma s_to_b:
   fixes n w
   assumes Sv: "S v"
   shows "\<And>n w. (v = replicate n a @ w) \<Longrightarrow> balanced n w"
@@ -693,7 +693,18 @@ next
    and IH: "\<And> n w. u = replicate n a @ w \<Longrightarrow> balanced n w"
    and asm: "a # u @ [b] = replicate n a @ w" by fact+
   show "balanced n w" 
-  proof (cases w rule:rev_cases)  
+  proof (cases n)
+    case 0
+    have "balanced 0 u" using IH by auto
+    then show "balanced n w" using "0" asm by auto
+  next
+    case (Suc nat)
+    then obtain y where "y @ [b] = w" using asm by (metis alpha.distinct(1) append_Cons append_Nil2 append_butlast_last_id last_appendR last_replicate last_snoc nat.distinct(1)) 
+    then have "u = replicate nat a @ y" using asm using Suc by auto
+    then have "balanced nat y" using IH by blast
+    then show ?thesis using Suc \<open>y @ [b] = w\<close> balanced_wrap by blast
+  qed
+  (* proof (cases w rule:rev_cases)  
     case Nil
     then show ?thesis by (metis Nil_is_append_conv alpha.distinct(1) append_self_conv asm empty_replicate last_ConsR last_replicate last_snoc list.discI)
   next
@@ -703,7 +714,7 @@ next
     hence u: "u = replicate n a @ ys" sorry
     have "balanced n ((a # b # ys) @ [b])" using asm snoc u by auto
     then show ?thesis  using asm snoc by auto
-  qed
+  qed *)
 
 next
   case (SDoubl w1 w2)
@@ -820,6 +831,13 @@ next
   
   show "balanced 0 (b # va)" sorry
 qed
- *)
+*)
+
+theorem "balanced n w = S (replicate n a @ w)" (is "?L = ?R")
+proof
+show "?L ==> ?R" by (simp add: b_to_s)
+next
+show "?R ==> ?L" by (simp add: s_to_b)
+qed
 
 end
