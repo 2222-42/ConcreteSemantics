@@ -127,4 +127,31 @@ we instead
   analyse all possible ways we could have gotten there
 \<close>
 
+subsubsection "7.2.3 Rule Inversion"
+
+text \<open>
+These inverted rules can be proved automatically by Isabelle from the original rules. 
+Moreover, proof methods like auto and blast can be instructed to use 
+both the introduction and the inverted rules automatically during proof search.
+\<close>
+
+inductive_cases SeqE[elim!]: "(c1;;c2,s1) \<Rightarrow> s3"
+thm SeqE
+
+lemma "(c1;;c2;;c3, s) \<Rightarrow> s' \<longleftrightarrow> (c1;;(c2;;c3), s) \<Rightarrow> s'"
+proof
+  assume "(c1;;c2;;c3, s) \<Rightarrow> s'"
+  then obtain s1 s2 where 
+    c1: "(c1, s) \<Rightarrow> s1" and 
+    "(c2, s1) \<Rightarrow> s2" and
+    "(c3, s2) \<Rightarrow> s'"  by blast
+    (* This method is not able to be used without the above SeqE. *)
+  then have "(c2;;c3, s1) \<Rightarrow> s'" using Seq by auto
+  then show " (c1;;(c2;;c3), s) \<Rightarrow> s'" using Seq c1 by auto
+next
+  assume "(c1;;(c2;;c3), s) \<Rightarrow> s'"
+  then show "(c1;;c2;;c3, s) \<Rightarrow> s'"  by (meson Seq SeqE)
+qed
+
+
 end
