@@ -1,6 +1,14 @@
 theory ConcreteSemantics7
-  imports Main 
+  imports Main "~~/src/HOL/IMP/Com"
 begin
+
+section "6 Introduction"
+
+text \<open>
+When building upon any of those theories,
+for example when solving an exercise, the imports section needs to include
+"~~/src/HOL/IMP/T" where T is the name of the required theory
+\<close>
 
 section "7 IMP: A Simple Imperative Language"
 
@@ -31,9 +39,11 @@ one could write separate parsing/printing ML code that integrates with Isabelle 
 \<close>
 
 text \<open>
-Therefore definitions and theorems about
-the core language only need to worry about one type of loop, while still supporting
-the full richness of a larger language. This significantly reduces proof
-size and effort for the theorems that we discuss in this book.
+Therefore definitions and theorems about the core language only need to worry about one type of loop, 
+while still supporting the full richness of a larger language. 
+This significantly reduces proof size and effort for the theorems that we discuss in this book.
 \<close>
+
+subsection "7.2 Big-Step Semantics"
+
 end
