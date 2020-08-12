@@ -1,4 +1,4 @@
-theory ConcreteSemantics7
+theory ConcreteSemantics7_1_2_BigStep
   imports Main "~~/src/HOL/IMP/Com"
 begin
 
