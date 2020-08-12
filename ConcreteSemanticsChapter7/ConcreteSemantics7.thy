@@ -108,7 +108,21 @@ we get the expected
 There seems be merely different.
 *)
 
+text\<open>We want to execute the big-step rules:\<close>
+
 code_pred big_step .
+
+text \<open>The introduction rules are good for automatically
+construction small program executions. The recursive cases
+may require backtracking, so we declare the set as unsafe
+intro rules.\<close>
+declare big_step.intros [intro]
+
+text\<open>The standard induction rule 
+@{thm [display] big_step.induct [no_vars]}\<close>
+
+thm big_step.induct
+
 
 values "{t. (SKIP, \<lambda>_.0) \<Rightarrow> t}"
 
@@ -135,8 +149,37 @@ Moreover, proof methods like auto and blast can be instructed to use
 both the introduction and the inverted rules automatically during proof search.
 \<close>
 
+inductive_cases SkipE[elim!]: "(SKIP,s) \<Rightarrow> t"
+thm SkipE
+inductive_cases AssignE[elim!]: "(x ::= a,s) \<Rightarrow> t"
+thm AssignE
 inductive_cases SeqE[elim!]: "(c1;;c2,s1) \<Rightarrow> s3"
 thm SeqE
+inductive_cases IfE[elim!]: "(IF b THEN c1 ELSE c2,s) \<Rightarrow> t"
+thm IfE
+
+inductive_cases WhileE[elim]: "(WHILE b DO c,s) \<Rightarrow> t"
+thm WhileE
+
+lemma "(IF b THEN SKIP ELSE SKIP, s) \<Rightarrow> t \<Longrightarrow> t = s"
+by blast
+
+lemma assumes "(IF b THEN SKIP ELSE SKIP, s) \<Rightarrow> t"
+shows "t = s"
+proof-
+  from assms show ?thesis
+  proof cases  \<comment> \<open>inverting assms\<close>
+    case IfTrue thm IfTrue
+    thus ?thesis by blast
+  next
+    case IfFalse thus ?thesis by blast
+  qed
+qed
+
+(* Using rule inversion to prove simplification rules: *)
+lemma assign_simp:
+  "(x ::= a,s) \<Rightarrow> s' \<longleftrightarrow> (s' = s(x := aval a s))"
+  by auto
 
 lemma "(c1;;c2;;c3, s) \<Rightarrow> s' \<longleftrightarrow> (c1;;(c2;;c3), s) \<Rightarrow> s'"
 proof
@@ -153,5 +196,60 @@ next
   then show "(c1;;c2;;c3, s) \<Rightarrow> s'"  by (meson Seq SeqE)
 qed
 
+text \<open>
+Big Stepの証明は基本的に上記の証明と代わりないが、オリジナルの証明の方がわかりやすい。
+あと、私の証明では、`by (meson Seq SeqE)`を最後に使っているが、オリジナルではそうではない。
+オリジナルのTheoryに入れられているいずれかのlemmaが効いているのであろうが、それはなにか。
+\<close>
+
+subsubsection "7.2.4 Equivalence of Commands"
+
+abbreviation
+  equiv_c :: "com \<Rightarrow> com \<Rightarrow> bool" (infix "\<sim>" 50) where
+  "c \<sim> c' \<equiv> (\<forall>s t. (c,s) \<Rightarrow> t  =  (c',s) \<Rightarrow> t)"
+
+text \<open>
+Big_Stepの証明とだいぶ違い、blastで済んでいるが、なぜだ。
+\<close>
+lemma "(WHILE b DO c) \<sim> (IF b THEN c;; WHILE b DO c ELSE SKIP)" (is "?w \<sim> ?iw")
+proof -
+(* have "(?iw, s) \<Rightarrow> t" if assm: "(?w, s) \<Rightarrow> t" for s t sorry
+have "(?w, s) \<Rightarrow> t" if assm: "(?iw, s) \<Rightarrow> t" for s t sorry *)
+ have "(?iw, s) \<Rightarrow> t" if assm: "(?w, s) \<Rightarrow> t" for s t
+proof -
+  from assm show ?thesis
+  proof cases
+    case WhileFalse
+    thus ?thesis 
+      (* using IfFalse Skip  *)
+      by blast 
+      (* ここで `using IfFalse Skip` が必要にったり明示されたりするのを避けるなら、
+      declare big_step.intros [intro]
+      が必要 *)
+  next
+    case WhileTrue
+    thus ?thesis by blast
+  qed
+qed 
+moreover have "(?w, s) \<Rightarrow> t" if assm: "(?iw, s) \<Rightarrow> t" for s t
+proof -
+  from assm show ?thesis
+    proof cases 
+      case IfFalse
+      thus ?thesis by blast
+    next
+      case IfTrue
+      thus ?thesis by blast
+    qed
+qed 
+ultimately show ?thesis by blast
+qed
+(* picking this:
+    (WHILE b DO c, ?s) \<Rightarrow> ?t \<Longrightarrow> (IF b THEN c;; WHILE b DO c ELSE SKIP, ?s) \<Rightarrow> ?t
+    (IF b THEN c;; WHILE b DO c ELSE SKIP, ?s) \<Rightarrow> ?t \<Longrightarrow> (WHILE b DO c, ?s) \<Rightarrow> ?t 
+Illegal application of proof command in "chain" mode 
+多分Whileに関するEliminationRuleを入れていないからかな?
+=> `proof -`としていなかったことが原因。
+*)
 
 end

@@ -8,6 +8,38 @@
 
 ## Memo
 
+### the feature of definitions
+
+Introduction Rule:
+- 導入規則は、どの前提によって、論理構成子が導入されたのかを説明する。
+- 定理`r`があったら、`r [of f1 ... f2]`によって、そのunknownsを埋めることができる。
+- 定理`r`があったら、`r [OF r1 ... rm]`によって、導入規則を作れる
+
+We want to execute the inductively defined rules:
+```
+code_pred xxx .
+```
+
+The introduction rules are good for automatically construction small program executions. 
+The recursive cases may require backtracking, so we declare the set as unsafe intro rules.
+```
+declare xxx.intros [intro]
+```
+
+The standard induction rule `@{thm [display] big_step.induct [no_vars]}`
+```
+thm xxx.induct
+```
+
+とりあえず、inductiveな定義をしたら、以下を書いておけば安心か？
+```
+code_pred xxx .
+declare xxx.intros [intro]
+thm xxx.induct
+```
+
+### Method
+
 addとintroの区別
 - `add`はadditional lemmaを追加。(最も左のものに適用させる)
 - `intro`はintroduction ruleを追加
@@ -18,11 +50,6 @@ addとintroの区別
 simpかautoか
 - `auto`はsimplificationをやって、それに対して全部のサブゴールに対して自動で適用させる。
 - `simp`はsimplificationだけをやってくれるから、autoが実行数量なのが必要なければやらない方がらく。
-
-Introduction Rule:
-- 導入規則は、どの前提によって、論理構成子が導入されたのかを説明する。
-- 定理`r`があったら、`r [of f1 ... f2]`によって、そのunknownsを埋めることができる。
-- 定理`r`があったら、`r [OF r1 ... rm]`によって、導入規則を作れる
 
 fastforceについて
 - 最初のsubgoalについてのみ実施する。
