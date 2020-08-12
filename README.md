@@ -38,6 +38,16 @@ declare xxx.intros [intro]
 thm xxx.induct
 ```
 
+This induction schema is almost perfect for our purposes, but
+our trick for reusing the tuple syntax means that the induction
+schema has two parameters instead of the \<open>c\<close>, \<open>s\<close>,
+and \<open>s'\<close> that we are likely to encounter. Splitting
+the tuple parameter fixes this:
+```
+lemmas xxx_induct = xxx.induct[split_format(complete)]
+thm xxx_induct
+```
+
 ### Method
 
 addとintroの区別

@@ -252,4 +252,39 @@ Illegal application of proof command in "chain" mode
 => `proof -`としていなかったことが原因。
 *)
 
+lemma "(c) \<sim> (IF b THEN c ELSE c)" (is "?w \<sim> ?iw")
+by blast
+(* proof -
+ have "(?iw, s) \<Rightarrow> t" if assm: "(?w, s) \<Rightarrow> t" for s t 
+  proof cases 
+    case (bval b s)
+    then show ?thesis sorry
+  next
+    case \<not> (bval b s)
+    then show ?thesis sorry
+  qed
+ moreover have "(?w, s) \<Rightarrow> t" if assm: "(?iw, s) \<Rightarrow> t" for s t sorry
+ ultimately show ?thesis by blast
+qed *)
+
+text\<open>
+This induction schema is almost perfect for our purposes, but
+our trick for reusing the tuple syntax means that the induction
+schema has two parameters instead of the \<open>c\<close>, \<open>s\<close>,
+and \<open>s'\<close> that we are likely to encounter. Splitting
+the tuple parameter fixes this:
+\<close>
+lemmas big_step_induct = big_step.induct[split_format(complete)]
+thm big_step_induct
+
+lemma sim_while_cong_aux:
+  "(WHILE b DO c,s) \<Rightarrow> t  \<Longrightarrow> c \<sim> c' \<Longrightarrow>  (WHILE b DO c',s) \<Rightarrow> t"
+apply(induction "WHILE b DO c" s t arbitrary: b c rule: big_step_induct)
+apply (simp add: WhileFalse)
+apply (simp add: WhileTrue)
+done
+
+lemma sim_while_cong: "c \<sim> c' \<Longrightarrow> WHILE b DO c \<sim> WHILE b DO c'"
+using sim_while_cong_aux by auto 
+
 end
