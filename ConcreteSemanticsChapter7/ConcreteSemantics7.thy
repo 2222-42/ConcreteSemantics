@@ -287,4 +287,20 @@ done
 lemma sim_while_cong: "c \<sim> c' \<Longrightarrow> WHILE b DO c \<sim> WHILE b DO c'"
 using sim_while_cong_aux by auto 
 
+text \<open>Command equivalence is an equivalence relation, i.e.\ it is
+reflexive, symmetric, and transitive. Because we used an abbreviation
+above, Isabelle derives this automatically.\<close>
+
+lemma sim_refl:  "c \<sim> c" by simp
+lemma sim_sym:   "(c \<sim> c') = (c' \<sim> c)" by auto
+lemma sim_trans: "c \<sim> c' \<Longrightarrow> c' \<sim> c'' \<Longrightarrow> c \<sim> c''" by auto
+
+subsubsection "7.2.5 Execution in IMP is Deterministic"
+
+theorem big_step_determ: "\<lbrakk> (c,s) \<Rightarrow> t; (c,s) \<Rightarrow> u \<rbrakk> \<Longrightarrow> u = t"
+apply(induction arbitrary: u rule:big_step_induct)
+apply(blast+)
+done
+(* テキストのFig. 7.4. と同じように各ケースを明記してもよいが、全部blastで解決されるため、`blast+`を使う` *)
+
 end
