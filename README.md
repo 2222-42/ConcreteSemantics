@@ -20,6 +20,8 @@ We want to execute the inductively defined rules:
 code_pred xxx .
 ```
 
+(`code_pred`の定義は？)
+
 The introduction rules are good for automatically construction small program executions. 
 The recursive cases may require backtracking, so we declare the set as unsafe intro rules.
 ```
@@ -46,6 +48,15 @@ the tuple parameter fixes this:
 ```
 lemmas xxx_induct = xxx.induct[split_format(complete)]
 thm xxx_induct
+```
+
+(`xxx_induct`と`xxx.induct`との違いがよくわかっていない。
+cf: SmallStepのdeterministicの証明におけるruleとBigStepのdeterministicの証明におけるruleの違い)
+
+各規則の`inductive_case`を導入しないと、後の証明で詰まりがちなので、やっておいたほうがいい。
+```
+inductive_cases RuleE[elim!]: "..."
+thm RuleE
 ```
 
 ### Method
