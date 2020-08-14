@@ -79,23 +79,34 @@ done *)
 
 subsubsection "7.3.1 Equivalence with Big-Step Semantics"
 
+lemma seq_comp:
+  "\<lbrakk> (c1,s1) \<rightarrow>* (SKIP,s2); (c2,s2) \<rightarrow>* (SKIP,s3) \<rbrakk>
+   \<Longrightarrow> (c1;;c2, s1) \<rightarrow>* (SKIP,s3)"
+sorry
+
 lemma big_to_small:
   "cs \<Rightarrow> t \<Longrightarrow> cs \<rightarrow>* (SKIP,t)"
 proof(induction rule: big_step.induct)
   case (Skip s)
-  then show ?case sorry
+  then show ?case by blast
 next
   case (Assign x a s)
-  then show ?case sorry
+  then show ?case by blast
 next
   case (Seq c1 s1 s2 c2 s3)
-  then show ?case sorry
+  assume "(c1,s1) \<rightarrow>* (SKIP,s2)" and "(c2,s2) \<rightarrow>* (SKIP,s3)"
+  (* here is gap *)
+  then show ?case using seq_comp by blast
 next
   case (IfTrue b s c1 t c2)
-  then show ?case sorry
+  assume "bval b s" and "(c1, s) \<rightarrow>* (SKIP, t)"
+  hence "(IF b THEN c1 ELSE c2,s) \<rightarrow> (c1,s)"  by (simp add: small_step.IfTrue)
+  then show ?case by (meson IfTrue.IH star.step)
 next
   case (IfFalse b s c2 t c1)
-  then show ?case sorry
+  assume "\<not> bval b s" and "(c2, s) \<rightarrow>* (SKIP, t)"
+  hence "(IF b THEN c1 ELSE c2,s) \<rightarrow> (c2,s)" by (simp add: small_step.IfFalse)
+  then show ?case by (meson IfFalse.IH star.step)
 next
   case (WhileFalse b s c)
   then show ?case sorry
