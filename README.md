@@ -88,6 +88,18 @@ blast:
 - either succeeds or fails.
   - 失敗するか成功するかのいずれかである
 
+#### Methodの例について
+
+```
+  apply(auto intro: small1_big_continue)
+```
+
+```
+  apply(auto)
+  by (simp add: small1_big_continue)
+```
+
+
 ### Isar
 
 以下によって、 `f_0 ==> f_{n+1}`を証明する。

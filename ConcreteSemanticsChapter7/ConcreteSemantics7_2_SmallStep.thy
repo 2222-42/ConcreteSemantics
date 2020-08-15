@@ -138,4 +138,22 @@ next
   ultimately show ?case  by (meson star.step star_trans)
 qed
 
+lemma small1_big_continue:
+  "cs \<rightarrow> cs' \<Longrightarrow> cs' \<Rightarrow> t \<Longrightarrow> cs \<Rightarrow> t"
+  apply(induction arbitrary: t rule: small_step.induct)
+  apply(auto)
+  done
+  
+
+lemma small_to_big:
+  "cs \<rightarrow>* (SKIP,t) \<Longrightarrow> cs \<Rightarrow> t"
+  apply(induction cs "(SKIP, t)" rule: star.induct)
+  apply(auto)
+  by (simp add: small1_big_continue)
+
+theorem big_iff_small:
+  "cs \<Rightarrow> t = cs \<rightarrow>* (SKIP,t)"
+  using big_to_small small_to_big by blast
+
+
 end
