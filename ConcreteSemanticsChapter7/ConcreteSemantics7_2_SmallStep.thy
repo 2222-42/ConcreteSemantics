@@ -79,10 +79,20 @@ done *)
 
 subsubsection "7.3.1 Equivalence with Big-Step Semantics"
 
+lemma star_seq2: "(c1,s) \<rightarrow>* (c1',s') \<Longrightarrow> (c1;;c2,s) \<rightarrow>* (c1';;c2,s')"
+proof (induction rule: star_induct)
+  case (refl x)
+  then show ?case by simp
+next
+  case (step x y z)
+  then show ?case by (metis Seq2 star.step)
+qed
+
+
 lemma seq_comp:
   "\<lbrakk> (c1,s1) \<rightarrow>* (SKIP,s2); (c2,s2) \<rightarrow>* (SKIP,s3) \<rbrakk>
    \<Longrightarrow> (c1;;c2, s1) \<rightarrow>* (SKIP,s3)"
-sorry
+by (meson Seq1 star.step star_seq2 star_trans)
 
 lemma big_to_small:
   "cs \<Rightarrow> t \<Longrightarrow> cs \<rightarrow>* (SKIP,t)"
@@ -108,11 +118,24 @@ next
   hence "(IF b THEN c1 ELSE c2,s) \<rightarrow> (c2,s)" by (simp add: small_step.IfFalse)
   then show ?case by (meson IfFalse.IH star.step)
 next
+(* WhileFalse: "\<not>bval b s \<Longrightarrow> (WHILE b DO c,s) \<Rightarrow> s" *)
   case (WhileFalse b s c)
-  then show ?case sorry
+  assume "\<not>bval b s"
+  have "(WHILE b DO c,s) \<rightarrow>
+            (IF b THEN c;; WHILE b DO c ELSE SKIP,s)"  by (simp add: While)
+  moreover have "(IF b THEN c;; WHILE b DO c ELSE SKIP,s) \<rightarrow>* (SKIP, s)"  by (simp add: WhileFalse.hyps small_step.IfFalse)
+  ultimately show ?case  by (meson star.step)
+  (* then ... by (meson calculation star.step) *)
 next
+(* WhileTrue:
+"\<lbrakk> bval b s\<^sub>1;  (c,s\<^sub>1) \<Rightarrow> s\<^sub>2;  (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<rbrakk> 
+\<Longrightarrow> (WHILE b DO c, s\<^sub>1) \<Rightarrow> s\<^sub>3"  *)
   case (WhileTrue b s1 c s2 s3)
-  then show ?case sorry
+  assume b: "bval b s1" and c: "(c,s1) \<Rightarrow> s2" and w: "(WHILE b DO c, s2) \<Rightarrow> s3"
+  have "(WHILE b DO c, s1) \<rightarrow> (IF b THEN c;; WHILE b DO c ELSE SKIP, s1)" by blast
+  moreover have "(IF b THEN c;; WHILE b DO c ELSE SKIP, s1) \<rightarrow>* (c;;WHILE b DO c, s1)"  by (simp add: b small_step.IfTrue)
+  moreover have  "(c;; WHILE b DO c,s1) \<rightarrow>* (SKIP, s3)" using WhileTrue.IH(1) WhileTrue.IH(2) seq_comp by auto
+  ultimately show ?case  by (meson star.step star_trans)
 qed
 
 end
