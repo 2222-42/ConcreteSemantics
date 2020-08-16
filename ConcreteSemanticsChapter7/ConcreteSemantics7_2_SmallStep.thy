@@ -156,4 +156,32 @@ theorem big_iff_small:
   using big_to_small small_to_big by blast
 
 
+subsubsection "7.3.2 Final Configurations, Infinite Reductions, and Termination"
+
+definition final :: "com \<times> state \<Rightarrow> bool" where
+"final cs \<longleftrightarrow> \<not>(\<exists> cs'. cs \<rightarrow> cs')"
+
+lemma final_then_skip: "final (c,s) \<Longrightarrow> (c = SKIP)"
+(* final_def はinductionの先におかないと *)
+apply(simp add: final_def)
+apply(induction c)
+apply blast+
+done
+
+lemma skip_is_final: "(c = SKIP) \<Longrightarrow> final (c,s)"
+ using final_def by auto
+
+lemma finality_equivalent_skip: "final (c,s) = (c = SKIP)"
+using final_then_skip skip_is_final by blast
+
+text \<open> 
+This lemma says that in IMP the absence of a big-step result is equivalent to non-termination.
+
+In the bigstep semantics this is often indistinguishable from non-termination. 
+In the small-step semantics the concept of final configurations neatly distinguishes the two causes.
+\<close>
+lemma "(\<exists> t. cs \<Rightarrow> t ) \<longleftrightarrow> (\<exists> cs'. cs \<rightarrow>* cs' \<and> final cs')"
+apply(simp add: finality_equivalent_skip)
+using big_to_small small_to_big by blast
+
 end
