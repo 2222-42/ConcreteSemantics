@@ -6,7 +6,9 @@ section "7 IMP: A Simple Imperative Language"
 
 subsection "7.3 Small-Step Semantics"
 
-(* a different way of defining the semantics of IMP. *)
+(* a different way of defining the semantics of IMP. 
+let us talk explicitly about intermediate states of execution and about termination
+*)
 
 text \<open>
 the purpose of a small-step semantics:
@@ -151,6 +153,7 @@ lemma small_to_big:
   apply(auto)
   by (simp add: small1_big_continue)
 
+(* this alternative form describes the same behaviours as the big-step semantics. *)
 theorem big_iff_small:
   "cs \<Rightarrow> t = cs \<rightarrow>* (SKIP,t)"
   using big_to_small small_to_big by blast

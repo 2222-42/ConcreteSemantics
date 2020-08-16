@@ -51,6 +51,8 @@ use a big-step operational semantics to give meaning to commands.
 
 In an operational semantics setting, 
 the aim is to capture the meaning of a program as a relation that describes how a program executes
+
+easier to define and understand,
 \<close>
 
 subsubsection "7.2.1 Definition"
@@ -204,6 +206,7 @@ Big Stepの証明は基本的に上記の証明と代わりないが、オリジ
 
 subsubsection "7.2.4 Equivalence of Commands"
 
+(* semantic equivalence *)
 abbreviation
   equiv_c :: "com \<Rightarrow> com \<Rightarrow> bool" (infix "\<sim>" 50) where
   "c \<sim> c' \<equiv> (\<forall>s t. (c,s) \<Rightarrow> t  =  (c',s) \<Rightarrow> t)"
@@ -297,6 +300,7 @@ lemma sim_trans: "c \<sim> c' \<Longrightarrow> c' \<sim> c'' \<Longrightarrow> 
 
 subsubsection "7.2.5 Execution in IMP is Deterministic"
 
+(* determinism. *)
 theorem big_step_determ: "\<lbrakk> (c,s) \<Rightarrow> t; (c,s) \<Rightarrow> u \<rbrakk> \<Longrightarrow> u = t"
 apply(induction arbitrary: u rule:big_step_induct)
 apply(blast+)

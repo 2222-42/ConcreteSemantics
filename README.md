@@ -59,7 +59,7 @@ inductive_cases RuleE[elim!]: "..."
 thm RuleE
 ```
 
-### Method
+### Proof Method
 
 addとintroの区別
 - `add`はadditional lemmaを追加。(最も左のものに適用させる)
@@ -357,3 +357,11 @@ assume "ev(Suc 0)" then have P by cases
 ```
 
 (不可能なケースだったら明示しなくていい(Isabelleはわかっている))
+
+### Semanticsでよく使う道具
+
+以下の3つは、Semanticsの箇所で、よく使う証明技術である
+
+- derivation trees
+- rule inversion 
+- rule induction.
