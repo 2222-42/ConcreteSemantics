@@ -39,3 +39,38 @@ apply(simp_all)
 apply fastforce
 apply (meson IfE IfFalse IfTrue)
 done
+
+
+(* Exercise 7.3. *)
+fun deskip :: "com \<Rightarrow> com" where
+"deskip SKIP = SKIP" |
+"deskip (Assign vname aexp) = (Assign vname aexp)"|
+"deskip (Seq com1 com2) = (if deskip com1 = SKIP then deskip com2 else (if deskip com2 = SKIP then deskip com1 else (Seq (deskip com1) (deskip com2))))"|
+"deskip (If bexp com1 com2) = (If bexp (deskip com1) (deskip com2))"|
+"deskip (While bexp com) = While bexp (deskip com)"
+
+lemma "deskip c \<sim> c"
+proof(induction c)
+  case SKIP
+  then show ?case by simp
+next
+  case (Assign x1 x2)
+  then show ?case by simp
+next
+  case (Seq c1 c2)
+  (* deskip c1 \<sim> c1 \<Longrightarrow> deskip c2 \<sim> c2 \<Longrightarrow> deskip (c1;; c2) \<sim> c1;; c2 *)
+  (* have "deskip (c1;; c2) \<sim> c1;; c2" sledgehammer *)
+  have "deskip (c1;; c2) \<sim> (deskip c1;; deskip c2)" by auto
+  moreover have "deskip c1 ;; deskip c2 \<sim> c1 ;; c2 " using Seq.IH(1) Seq.IH(2) by blast
+  ultimately show ?case by auto
+next
+  case (If x1 c1 c2)
+  then show ?case by auto
+next
+  case (While x1 c)
+  then show ?case using sim_while_cong_aux by auto
+qed
+(* apply(induction c rule: deskip.induct)
+apply(simp_all)
+sledgehammer
+apply(simp add: sim_while_cong) *)
