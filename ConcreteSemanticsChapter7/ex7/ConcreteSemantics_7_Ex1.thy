@@ -3,8 +3,8 @@ theory ConcreteSemantics_7_Ex1
 begin
 
 (* Exercise 7.1. *)
-type_synonym vname = string
-datatype aexp = N int | V vname | Plus aexp aexp
+(* type_synonym vname = string
+datatype aexp = N int | V vname | Plus aexp aexp *)
 
 fun assigned :: "com \<Rightarrow> vname set" where
 "assigned SKIP = {}" |
@@ -74,3 +74,23 @@ qed
 apply(simp_all)
 sledgehammer
 apply(simp add: sim_while_cong) *)
+
+
+(* Exercise 7.4. *)
+
+text \<open> Complete the definition with two rules for Plus that model a left-to-right
+evaluation strategy: reduce the first argument with \<leadsto> if possible, reduce the
+second argument with \<leadsto> if the first argument is a number \<close>
+inductive astep :: "aexp \<times> state \<Rightarrow> aexp \<Rightarrow> bool" (infix "\<leadsto>" 50) where
+"(V x, s) \<leadsto> N (s x)" |
+"(Plus (N i) (N j), s) \<leadsto> N (i + j)" |
+"((a, s) \<leadsto> a') \<Longrightarrow> (Plus a b, s) \<leadsto> Plus a' b" |
+"((b, s) \<leadsto> b') \<Longrightarrow> (Plus (N i) b, s) \<leadsto> Plus (N i) b'"
+
+lemma "(a, s) \<leadsto> a' \<Longrightarrow> aval a s = aval a' s"
+apply(induction rule: astep.induct[split_format(complete)])
+apply(auto)
+done
+
+(* 何もわからずに証明が終わった *)
+
