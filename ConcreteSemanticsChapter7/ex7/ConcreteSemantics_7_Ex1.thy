@@ -94,3 +94,66 @@ done
 
 (* 何もわからずに証明が終わった *)
 
+
+(* Exercise 7.5 *)
+lemma "IF And b1 b2 THEN c1 ELSE c2 \<sim> IF b1 THEN IF b2 THEN c1 ELSE c2 ELSE c2"
+using IfTrue by fastforce
+
+(* lemma "WHILE And b1 b2 DO c \<sim> WHILE b1 DO WHILE b2 DO c"
+(* apply(induction "WHILE b2 DO c" rule: big_step_induct) *)
+sorry *)
+(* `c` が `SKIP` の時は違くないか？ *)
+
+(* lemma "\<not> (WHILE And b1 b2 DO c \<sim> WHILE b1 DO WHILE b2 DO c)"
+apply(induction "WHILE b1 DO WHILE b2 DO c" rule: big_step_induct) *)
+
+(* abbreviation
+  equiv_c :: "com \<Rightarrow> com \<Rightarrow> bool" (infix "\<sim>" 50) where
+  "c \<sim> c' \<equiv> (\<forall>s t. (c,s) \<Rightarrow> t  =  (c',s) \<Rightarrow> t)" *)
+(* lemma \<exists> s t. (WHILE And b1 b2 DO c, s) \<Rightarrow> t \<and>  *)
+
+(* lemma "\<not> (\<forall> s t c. (WHILE And b1 b2 DO c, s) \<Rightarrow> t = (WHILE b1 DO WHILE b2 DO c, s) \<Rightarrow> t)"
+proof 
+  assume "\<forall> s t c. (WHILE And b1 b2 DO c, s) \<Rightarrow> t = (WHILE b1 DO WHILE b2 DO c, s) \<Rightarrow> t"
+
+  thus False sorry
+qed *)
+(* 上記だと束縛が多いからだめ。 *)
+
+lemma "\<not> (WHILE And (Bc True) (Bc False) DO SKIP \<sim> WHILE (Bc True) DO WHILE (Bc False) DO SKIP)"
+proof 
+assume asm: "(WHILE And (Bc True) (Bc False) DO SKIP \<sim> WHILE (Bc True) DO WHILE (Bc False) DO SKIP)"
+have "(WHILE And (Bc True) (Bc False) DO SKIP, s) \<Rightarrow> s" by (simp add: WhileFalse)
+then have "(WHILE (Bc True) DO WHILE (Bc False) DO SKIP, s) \<Rightarrow> s" by (simp add: asm)
+then show False by (induction "(WHILE (Bc True) DO WHILE (Bc False) DO SKIP)" s s rule: big_step_induct, simp)
+qed
+
+definition Or :: "bexp \<Rightarrow> bexp \<Rightarrow> bexp" where
+"Or b1 b2 = Not (And (Not b1) (Not b2))"
+
+(* lemma "\<forall> s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t \<Longrightarrow> (WHILE b1 DO WHILE b2 DO c,  s) \<Rightarrow> t"
+proof -
+  assume a1: "\<forall>s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t"
+  then have "\<forall>f fa fb. fb = f \<or> \<not> (WHILE Or b1 b2 DO c, fa) \<Rightarrow> fb"
+    by (metis big_step_determ)
+  then have "\<forall>a aa. aa = a"
+    using a1 sorry
+    (* proof -
+      { fix dd :: 'd and dda :: 'd
+        have "\<And>e ea. e = ea"
+          using \<open>\<forall>f fa fb. fb = f \<or> \<not> (WHILE Or b1 b2 DO c, fa) \<Rightarrow> fb\<close> \<open>\<forall>s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t\<close> sorry (* > 1.0 s, timed out *)
+        then have "dd = dda"
+          by blast (* > 1.0 s, timed out *) }
+      then show ?thesis
+        by blast (* > 1.0 s, timed out *)
+    qed *)
+  then have "\<forall>c ca cb b. IF b THEN c ELSE cb \<noteq> ca"
+    using com.distinct(11) by fastforce (* > 1.0 s, timed out *)
+  then show ?thesis
+    by blast
+qed  *)
+
+(* lemma "\<forall> s t. (WHILE b1 DO WHILE b2 DO c, s) \<Rightarrow> t \<Longrightarrow> (WHILE Or b1 b2 DO c,  s) \<Rightarrow> t" *)
+
+(* lemma "WHILE Or b1 b2 DO c \<sim> WHILE b1 DO WHILE b2 DO c"
+sledgehammer *)
