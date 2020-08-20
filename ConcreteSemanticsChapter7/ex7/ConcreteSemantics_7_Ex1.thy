@@ -131,29 +131,58 @@ qed
 definition Or :: "bexp \<Rightarrow> bexp \<Rightarrow> bexp" where
 "Or b1 b2 = Not (And (Not b1) (Not b2))"
 
-(* lemma "\<forall> s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t \<Longrightarrow> (WHILE b1 DO WHILE b2 DO c,  s) \<Rightarrow> t"
+lemma
+while_terminates_then_cond_false:
+assumes a: "(WHILE b DO c, s) \<Rightarrow> t" (is "(?C, s) \<Rightarrow> t")
+shows "\<not> bval b t"
 proof -
-  assume a1: "\<forall>s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t"
-  then have "\<forall>f fa fb. fb = f \<or> \<not> (WHILE Or b1 b2 DO c, fa) \<Rightarrow> fb"
-    by (metis big_step_determ)
-  then have "\<forall>a aa. aa = a"
-    using a1 sorry
-    (* proof -
-      { fix dd :: 'd and dda :: 'd
-        have "\<And>e ea. e = ea"
-          using \<open>\<forall>f fa fb. fb = f \<or> \<not> (WHILE Or b1 b2 DO c, fa) \<Rightarrow> fb\<close> \<open>\<forall>s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t\<close> sorry (* > 1.0 s, timed out *)
-        then have "dd = dda"
-          by blast (* > 1.0 s, timed out *) }
-      then show ?thesis
-        by blast (* > 1.0 s, timed out *)
-    qed *)
-  then have "\<forall>c ca cb b. IF b THEN c ELSE cb \<noteq> ca"
-    using com.distinct(11) by fastforce (* > 1.0 s, timed out *)
-  then show ?thesis
-    by blast
-qed  *)
+  from a show ?thesis by (induction ?C s t rule: big_step_induct, auto)
+qed
 
-(* lemma "\<forall> s t. (WHILE b1 DO WHILE b2 DO c, s) \<Rightarrow> t \<Longrightarrow> (WHILE Or b1 b2 DO c,  s) \<Rightarrow> t" *)
+(* lemma "\<forall> s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t \<longrightarrow> (WHILE Or b1 b2 DO c;;WHILE b1 DO c,  s) \<Rightarrow> t"
+  proof -
+      {fix s t
+      assume terminates: "(WHILE Or b1 b2 DO c, s) \<Rightarrow> t"
+      hence "\<not> bval (Or b1 b2) t" using while_terminates_then_cond_false by auto
+      hence "(WHILE b1 DO c, t) \<Rightarrow> t" by (auto simp add: Or_def)
+      from this have "(WHILE Or b1 b2 DO c;; WHILE b1 DO c, s) \<Rightarrow> t" using terminates by auto
+      } thus ?thesis by auto
+  qed
 
-(* lemma "WHILE Or b1 b2 DO c \<sim> WHILE b1 DO WHILE b2 DO c"
-sledgehammer *)
+lemma "\<forall> s t. (WHILE Or b1 b2 DO c;;WHILE b1 DO c,  s) \<Rightarrow> t \<longrightarrow> (WHILE Or b1 b2 DO c, s) \<Rightarrow> t"
+proof -
+{fix s t
+assume terminates: "(WHILE Or b1 b2 DO c;;WHILE b1 DO c, s) \<Rightarrow> t"
+then obtain t1 where seq1: "(WHILE Or b1 b2 DO c, s) \<Rightarrow> t1" and seq2: "(WHILE b1 DO c, t1) \<Rightarrow> t" by auto
+hence "\<not> bval (Or b1 b2) t1" using while_terminates_then_cond_false by auto
+then have "(WHILE Or b1 b2 DO c, s) \<Rightarrow> t" sorry}
+thus ?thesis sorry
+qed *)
+
+lemma "WHILE Or b\<^sub>1 b\<^sub>2 DO c \<sim>
+          WHILE Or b\<^sub>1 b\<^sub>2 DO c;; WHILE b\<^sub>1 DO c" (is "?P \<sim> ?P;; ?Q")
+proof -
+  have ltr: "\<forall>s t. (?P, s) \<Rightarrow> t \<longrightarrow> (?P;; ?Q, s) \<Rightarrow> t"
+  proof -
+      {fix s t
+      assume terminates: "(?P, s) \<Rightarrow> t"
+      hence "\<not> bval (Or b\<^sub>1 b\<^sub>2) t" using while_terminates_then_cond_false by auto
+      hence "(?Q, t) \<Rightarrow> t" by (auto simp add: Or_def)
+      from this have "(?P;; ?Q, s) \<Rightarrow> t" using terminates by auto
+      } thus ?thesis by auto
+  qed
+
+  have rtl: "\<forall>s t. (?P;; ?Q, s) \<Rightarrow> t \<longrightarrow> (?P, s) \<Rightarrow> t"
+  proof -
+    {fix s t
+    assume terminates: "(?P;; ?Q, s) \<Rightarrow> t"
+    then obtain t1 where seq1: "(?P, s) \<Rightarrow> t1" and seq2: "(?Q, t1) \<Rightarrow> t" by auto
+    hence "\<not> bval (Or b\<^sub>1 b\<^sub>2) t1" using while_terminates_then_cond_false terminates by auto
+    hence nb1: "\<not> bval b\<^sub>1 t1" by (auto simp add: Or_def)
+    hence "t1 = t" using seq2 by auto
+    hence "(?P, s) \<Rightarrow> t" using terminates seq1 seq2 nb1 by auto
+    } thus ?thesis by auto
+  qed
+
+  show ?thesis using ltr rtl by blast
+qed
