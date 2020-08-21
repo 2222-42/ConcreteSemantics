@@ -163,3 +163,45 @@ qed
 
 lemma "WHILE Or b1 b2 DO c \<sim> WHILE Or b1 b2 DO c;;WHILE b1 DO c"
 by (meson wowow wowwo)
+
+(* Exercise 7.6. *)
+definition  Do:: "com \<Rightarrow> bexp \<Rightarrow> com" ("(DO _/ WHILE _)"  [0, 61] 61)where
+"DO cmd WHILE b = cmd;;WHILE b DO cmd"
+
+fun dewhile :: "com => com" where
+"dewhile SKIP = SKIP" |
+"dewhile (Assign vname aexp) = (Assign vname aexp)"|
+"dewhile (Seq com1 com2) =  Seq (dewhile com1) (dewhile com2)"|
+"dewhile (If bexp com1 com2) = (If bexp (dewhile com1) (dewhile com2))"|
+"dewhile (While bexp com) = IF Not bexp THEN SKIP ELSE (DO dewhile com WHILE bexp)" 
+
+(* WhileFalse: "\<not>bval b s \<Longrightarrow> (WHILE b DO c,s) \<Rightarrow> s" |
+WhileTrue:
+"\<lbrakk> bval b s\<^sub>1;  (c,s\<^sub>1) \<Rightarrow> s\<^sub>2;  (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<rbrakk> 
+\<Longrightarrow> (WHILE b DO c, s\<^sub>1) \<Rightarrow> s\<^sub>3" *)
+
+lemma "dewhile c \<sim> c" 
+apply(induction c)
+apply(auto)
+apply (smt Do_def SeqE WhileTrue sim_while_cong)
+by (metis Do_def IfE IfFalse IfTrue bval.simps(2) sim_while_cong_aux while_unfold)
+
+lemma "dewhile c \<sim> c" 
+proof (induction c)
+  case SKIP
+  then show ?case by simp
+next
+  case (Assign x1 x2)
+  then show ?case by simp
+next
+  case (Seq c1 c2)
+  then show ?case by auto
+next
+  case (If x1 c1 c2)
+  then show ?case by auto
+next
+  case (While x1 c)
+  hence "WHILE x1 DO c \<sim> WHILE x1 DO dewhile c"  by (simp add: sim_while_cong)
+  then show ?case using Do_def while_unfold by auto
+  (* by (metis Do_def IfE IfFalse IfTrue bval.simps(2) dewhile.simps(5) while_unfold) *)
+qed
