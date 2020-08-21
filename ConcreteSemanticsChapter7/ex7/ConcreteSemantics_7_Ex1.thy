@@ -139,7 +139,7 @@ proof -
   from a show ?thesis by (induction ?C s t rule: big_step_induct, auto)
 qed
 
-(* lemma "\<forall> s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t \<longrightarrow> (WHILE Or b1 b2 DO c;;WHILE b1 DO c,  s) \<Rightarrow> t"
+lemma wowow: "\<forall> s t. (WHILE Or b1 b2 DO c, s) \<Rightarrow> t \<longrightarrow> (WHILE Or b1 b2 DO c;;WHILE b1 DO c,  s) \<Rightarrow> t"
   proof -
       {fix s t
       assume terminates: "(WHILE Or b1 b2 DO c, s) \<Rightarrow> t"
@@ -149,40 +149,17 @@ qed
       } thus ?thesis by auto
   qed
 
-lemma "\<forall> s t. (WHILE Or b1 b2 DO c;;WHILE b1 DO c,  s) \<Rightarrow> t \<longrightarrow> (WHILE Or b1 b2 DO c, s) \<Rightarrow> t"
+lemma wowwo:"\<forall> s t. (WHILE Or b1 b2 DO c;;WHILE b1 DO c,  s) \<Rightarrow> t \<longrightarrow> (WHILE Or b1 b2 DO c, s) \<Rightarrow> t"
 proof -
 {fix s t
 assume terminates: "(WHILE Or b1 b2 DO c;;WHILE b1 DO c, s) \<Rightarrow> t"
 then obtain t1 where seq1: "(WHILE Or b1 b2 DO c, s) \<Rightarrow> t1" and seq2: "(WHILE b1 DO c, t1) \<Rightarrow> t" by auto
 hence "\<not> bval (Or b1 b2) t1" using while_terminates_then_cond_false by auto
-then have "(WHILE Or b1 b2 DO c, s) \<Rightarrow> t" sorry}
-thus ?thesis sorry
-qed *)
-
-lemma "WHILE Or b\<^sub>1 b\<^sub>2 DO c \<sim>
-          WHILE Or b\<^sub>1 b\<^sub>2 DO c;; WHILE b\<^sub>1 DO c" (is "?P \<sim> ?P;; ?Q")
-proof -
-  have ltr: "\<forall>s t. (?P, s) \<Rightarrow> t \<longrightarrow> (?P;; ?Q, s) \<Rightarrow> t"
-  proof -
-      {fix s t
-      assume terminates: "(?P, s) \<Rightarrow> t"
-      hence "\<not> bval (Or b\<^sub>1 b\<^sub>2) t" using while_terminates_then_cond_false by auto
-      hence "(?Q, t) \<Rightarrow> t" by (auto simp add: Or_def)
-      from this have "(?P;; ?Q, s) \<Rightarrow> t" using terminates by auto
-      } thus ?thesis by auto
-  qed
-
-  have rtl: "\<forall>s t. (?P;; ?Q, s) \<Rightarrow> t \<longrightarrow> (?P, s) \<Rightarrow> t"
-  proof -
-    {fix s t
-    assume terminates: "(?P;; ?Q, s) \<Rightarrow> t"
-    then obtain t1 where seq1: "(?P, s) \<Rightarrow> t1" and seq2: "(?Q, t1) \<Rightarrow> t" by auto
-    hence "\<not> bval (Or b\<^sub>1 b\<^sub>2) t1" using while_terminates_then_cond_false terminates by auto
-    hence nb1: "\<not> bval b\<^sub>1 t1" by (auto simp add: Or_def)
-    hence "t1 = t" using seq2 by auto
-    hence "(?P, s) \<Rightarrow> t" using terminates seq1 seq2 nb1 by auto
-    } thus ?thesis by auto
-  qed
-
-  show ?thesis using ltr rtl by blast
+hence nb1: "\<not> bval b1 t1"  by (simp add: Or_def)
+hence "t1 = t" using seq2 by auto
+hence "(WHILE Or b1 b2 DO c, s) \<Rightarrow> t" using terminates seq1 seq2 nb1 by auto}
+thus ?thesis by auto
 qed
+
+lemma "WHILE Or b1 b2 DO c \<sim> WHILE Or b1 b2 DO c;;WHILE b1 DO c"
+by (meson wowow wowwo)
