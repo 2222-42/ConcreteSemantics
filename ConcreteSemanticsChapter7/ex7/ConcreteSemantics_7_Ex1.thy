@@ -1,5 +1,5 @@
 theory ConcreteSemantics_7_Ex1
-  imports Main "~~/src/HOL/IMP/Big_Step"
+  imports Main "~~/src/HOL/IMP/Big_Step" "~~/src/HOL/IMP/Small_Step"
 begin
 
 (* Exercise 7.1. *)
@@ -37,8 +37,9 @@ lemma "skip c \<Longrightarrow> c \<sim> SKIP"
 apply(induction c)
 apply(simp_all)
 apply fastforce
-apply (meson IfE IfFalse IfTrue)
-done
+ by (meson Big_Step.IfE big_step.IfFalse big_step.IfTrue)
+(* apply (meson BigStep.IfE IfFalse IfTrue)
+done *)
 
 
 (* Exercise 7.3. *)
@@ -183,8 +184,10 @@ WhileTrue:
 lemma "dewhile c \<sim> c" 
 apply(induction c)
 apply(auto)
-apply (smt Do_def SeqE WhileTrue sim_while_cong)
-by (metis Do_def IfE IfFalse IfTrue bval.simps(2) sim_while_cong_aux while_unfold)
+apply (smt Big_Step.SeqE Do_def WhileTrue sim_while_cong)
+by (metis Big_Step.IfE Do_def big_step.IfFalse big_step.IfTrue bval.simps(2) sim_while_cong_aux while_unfold)
+(* apply (smt Do_def SeqE WhileTrue sim_while_cong)
+by (metis Do_def IfE IfFalse IfTrue bval.simps(2) sim_while_cong_aux while_unfold) *)
 
 lemma "dewhile c \<sim> c" 
 proof (induction c)
@@ -205,3 +208,11 @@ next
   then show ?case using Do_def while_unfold by auto
   (* by (metis Do_def IfE IfFalse IfTrue bval.simps(2) dewhile.simps(5) while_unfold) *)
 qed
+
+(* Exercise 7.7. *)
+lemma "\<lbrakk> C 0 = c;; d; \<forall> n. (C n, S n) \<rightarrow> (C (Suc n), S (Suc n))\<rbrakk>
+\<Longrightarrow> (\<forall> n. \<exists> c1 c2.
+  C n = c1;; d \<and>
+  C (Suc n) = c2;; d \<and> (c1, S n) \<rightarrow> (c2, S (Suc n))) \<or>
+(\<exists> k. C k = SKIP;; d)"
+sorry
