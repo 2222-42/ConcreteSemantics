@@ -211,8 +211,31 @@ qed
 
 (* Exercise 7.7. *)
 lemma "\<lbrakk> C 0 = c;; d; \<forall> n. (C n, S n) \<rightarrow> (C (Suc n), S (Suc n))\<rbrakk>
-\<Longrightarrow> (\<forall> n. \<exists> c1 c2.
-  C n = c1;; d \<and>
-  C (Suc n) = c2;; d \<and> (c1, S n) \<rightarrow> (c2, S (Suc n))) \<or>
-(\<exists> k. C k = SKIP;; d)"
-sorry
+      \<Longrightarrow>  (\<forall> n. \<exists> c1 c2.
+            C n = c1;; d \<and>
+            C (Suc n) = c2;; d \<and> (c1, S n) \<rightarrow> (c2, S (Suc n))) \<or>
+          (\<exists> k. C k = SKIP;; d)"
+proof cases
+  assume a: "(\<exists> k. C k = SKIP;; d)"
+  thus ?thesis by blast
+next
+  assume nega: "\<not> (\<exists> k. C k = SKIP;; d)"
+  assume c0: "C 0 = c;; d" and cnsn:"\<forall> n. (C n, S n) \<rightarrow> (C (Suc n), S (Suc n))"
+  have "\<forall>n. \<exists>c1 c2. C n = c1;; d \<and> C (Suc n) = c2;; d \<and> (c1, S n) \<rightarrow> (c2, S (Suc n))"
+  proof 
+    fix i
+    show "\<exists>c1 c2. C i = c1;; d \<and> C (Suc i) = c2;; d \<and> (c1, S i) \<rightarrow> (c2, S (Suc i))" 
+    proof (induction i)
+      case 0
+      then show ?case  by (metis Pair_inject Small_Step.SeqE c0 cnsn nega)
+    next
+      case (Suc i)
+      (* 帰納法の仮定 *)
+      then obtain c1 c2 where ih:"C i = c1;; d \<and> C (Suc i) = c2;; d \<and> (c1, S i) \<rightarrow> (c2, S (Suc i))" by auto
+      then obtain c3 where "C(Suc(Suc i)) = c3;; d" by (metis Pair_inject Small_Step.SeqE cnsn nega)
+      then have "C (Suc i) = c2;;d \<and> C(Suc (Suc i)) = c3;;d \<and> (c2, S (Suc i)) \<rightarrow> (c3, S(Suc(Suc i)))" by (metis Pair_inject Small_Step.SeqE cnsn com.inject(2) ih nega)
+      then show ?case by blast
+    qed
+  qed
+  thus ?thesis by simp
+qed
