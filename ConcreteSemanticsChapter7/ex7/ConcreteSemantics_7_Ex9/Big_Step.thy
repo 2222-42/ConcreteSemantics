@@ -22,7 +22,9 @@ IfFalse: "\<lbrakk> \<not>bval b s;  (c\<^sub>2,s) \<Rightarrow> t \<rbrakk> \<L
 WhileFalse: "\<not>bval b s \<Longrightarrow> (WHILE b DO c,s) \<Rightarrow> s" |
 WhileTrue:
 "\<lbrakk> bval b s\<^sub>1;  (c,s\<^sub>1) \<Rightarrow> s\<^sub>2;  (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<rbrakk> 
-\<Longrightarrow> (WHILE b DO c, s\<^sub>1) \<Rightarrow> s\<^sub>3"
+\<Longrightarrow> (WHILE b DO c, s\<^sub>1) \<Rightarrow> s\<^sub>3" |
+OrL: "(l, s1) \<Rightarrow> s2 \<Longrightarrow> (l OR r, s1) \<Rightarrow> s2" |
+OrR: "(r, s1) \<Rightarrow> s2 \<Longrightarrow> (l OR r, s1) \<Rightarrow> s2" 
 text_raw\<open>}%endsnip\<close>
 
 text_raw\<open>\snip{BigStepEx}{1}{2}{%\<close>
@@ -108,6 +110,9 @@ thm IfE
 inductive_cases WhileE[elim]: "(WHILE b DO c,s) \<Rightarrow> t"
 thm WhileE
 text\<open>Only [elim]: [elim!] would not terminate.\<close>
+
+inductive_cases OrE[elim]: "(l OR r, s) \<Rightarrow> t"
+thm OrE
 
 text\<open>An automatic example:\<close>
 
@@ -243,6 +248,8 @@ done
 
 lemma sim_while_cong: "c \<sim> c' \<Longrightarrow> WHILE b DO c \<sim> WHILE b DO c'"
 by (metis sim_while_cong_aux)
+
+lemma sim_or: "(c1 OR c2) \<sim> (c2 OR c1)" by auto
 
 text \<open>Command equivalence is an equivalence relation, i.e.\ it is
 reflexive, symmetric, and transitive. Because we used an abbreviation
