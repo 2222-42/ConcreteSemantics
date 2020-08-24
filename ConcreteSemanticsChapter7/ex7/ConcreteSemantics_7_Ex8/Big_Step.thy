@@ -22,7 +22,9 @@ IfFalse: "\<lbrakk> \<not>bval b s;  (c\<^sub>2,s) \<Rightarrow> t \<rbrakk> \<L
 WhileFalse: "\<not>bval b s \<Longrightarrow> (WHILE b DO c,s) \<Rightarrow> s" |
 WhileTrue:
 "\<lbrakk> bval b s\<^sub>1;  (c,s\<^sub>1) \<Rightarrow> s\<^sub>2;  (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<rbrakk> 
-\<Longrightarrow> (WHILE b DO c, s\<^sub>1) \<Rightarrow> s\<^sub>3"
+\<Longrightarrow> (WHILE b DO c, s\<^sub>1) \<Rightarrow> s\<^sub>3" |
+RepeatTrue: "\<lbrakk> (c, s\<^sub>1) \<Rightarrow> s\<^sub>2; bval b s\<^sub>2;  (REPEAT c UNTIL b, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<rbrakk> \<Longrightarrow> (REPEAT c UNTIL b, s\<^sub>1) \<Rightarrow> s\<^sub>3" |
+RepeatFalse: "\<lbrakk> (c, s\<^sub>1) \<Rightarrow> s\<^sub>2; \<not> bval b s\<^sub>2 \<rbrakk> \<Longrightarrow> (REPEAT c UNTIL b, s\<^sub>1) \<Rightarrow> s\<^sub>2"
 text_raw\<open>}%endsnip\<close>
 
 text_raw\<open>\snip{BigStepEx}{1}{2}{%\<close>
@@ -107,6 +109,10 @@ thm IfE
 
 inductive_cases WhileE[elim]: "(WHILE b DO c,s) \<Rightarrow> t"
 thm WhileE
+
+inductive_cases RepeatE[elim]: "(REPEAT c UNTIL b, s) \<Rightarrow> t"
+thm RepeatE
+
 text\<open>Only [elim]: [elim!] would not terminate.\<close>
 
 text\<open>An automatic example:\<close>
