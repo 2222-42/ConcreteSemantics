@@ -16,8 +16,9 @@ IfTrue:  "bval b s \<Longrightarrow> (IF b THEN c\<^sub>1 ELSE c\<^sub>2,s) \<ri
 IfFalse: "\<not>bval b s \<Longrightarrow> (IF b THEN c\<^sub>1 ELSE c\<^sub>2,s) \<rightarrow> (c\<^sub>2,s)" |
 
 While:   "(WHILE b DO c,s) \<rightarrow>
-            (IF b THEN c;; WHILE b DO c ELSE SKIP,s)"
+            (IF b THEN c;; WHILE b DO c ELSE SKIP,s)" |
 
+Repeat: "(REPEAT c UNTIL b, s) \<rightarrow> (c;; IF b THEN REPEAT c UNTIL b ELSE SKIP, s)"
 
 abbreviation
   small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
@@ -58,6 +59,7 @@ inductive_cases SeqE[elim]: "(c1;;c2,s) \<rightarrow> ct"
 thm SeqE
 inductive_cases IfE[elim!]: "(IF b THEN c1 ELSE c2,s) \<rightarrow> ct"
 inductive_cases WhileE[elim]: "(WHILE b DO c, s) \<rightarrow> ct"
+inductive_cases RepeatE[elim]: "(REPEAT c UNTIL b, s) \<rightarrow> ct"
 
 
 text\<open>A simple property:\<close>
@@ -118,6 +120,12 @@ next
   moreover have "(?if,s) \<rightarrow> (SKIP, s)" by (simp add: b)
   ultimately show "(WHILE b DO c,s) \<rightarrow>* (SKIP,s)" by(metis star.refl star.step)
 next
+(* \<And>b s\<^sub>1 c s\<^sub>2 s\<^sub>3.
+       bval b s\<^sub>1 \<Longrightarrow>
+       (c, s\<^sub>1) \<Rightarrow> s\<^sub>2 \<Longrightarrow>
+       (c, s\<^sub>1) \<rightarrow>* (SKIP, s\<^sub>2) \<Longrightarrow>
+       (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<Longrightarrow>
+       (WHILE b DO c, s\<^sub>2) \<rightarrow>* (SKIP, s\<^sub>3) \<Longrightarrow> (WHILE b DO c, s\<^sub>1) \<rightarrow>* (SKIP, s\<^sub>3) *)
   fix b c s s' t
   let ?w  = "WHILE b DO c"
   let ?if = "IF b THEN c;; ?w ELSE SKIP"
@@ -128,6 +136,43 @@ next
   moreover have "(?if, s) \<rightarrow> (c;; ?w, s)" by (simp add: b)
   moreover have "(c;; ?w,s) \<rightarrow>* (SKIP,t)" by(rule seq_comp[OF c w])
   ultimately show "(WHILE b DO c,s) \<rightarrow>* (SKIP,t)" by (metis star.simps)
+next
+(* \<And>c s\<^sub>1 s\<^sub>2 b s\<^sub>3.
+       (c, s\<^sub>1) \<Rightarrow> s\<^sub>2 \<Longrightarrow>
+       (c, s\<^sub>1) \<rightarrow>* (SKIP, s\<^sub>2) \<Longrightarrow>
+       bval b s\<^sub>2 \<Longrightarrow>
+       (REPEAT c UNTIL b, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<Longrightarrow>
+       (REPEAT c UNTIL b, s\<^sub>2) \<rightarrow>* (SKIP, s\<^sub>3) \<Longrightarrow>
+       (REPEAT c UNTIL b, s\<^sub>1) \<rightarrow>* (SKIP, s\<^sub>3) *)
+(* Repeat: "(REPEAT c UNTIL b, s) \<rightarrow> (c;; IF b THEN REPEAT c UNTIL b ELSE SKIP, s)" *)
+  fix c s1 s2 b s3
+  let ?r = "REPEAT c UNTIL b"
+  let ?if = "IF b THEN ?r ELSE SKIP"
+  assume r: "(?r, s2) \<rightarrow>* (SKIP, s3)"
+  assume c: "(c, s1) \<rightarrow>* (SKIP, s2)"
+  assume b: "bval b s2"
+  (* assume big_step_ih: "(?r, s1) \<Rightarrow> s2" *)
+  have "(?r, s1) \<rightarrow>* (c;;?if, s1)" by simp
+  moreover have "(c;;?if, s1) \<rightarrow>* (SKIP;;?if, s2)" by (simp add: c star_seq2)
+  moreover have "(SKIP;;?if, s2) \<rightarrow>* (?if, s2)" by blast
+  moreover have "(?if, s2) \<rightarrow>* (?r, s2)" by (simp add: b)
+  moreover have "(?r, s2) \<rightarrow>* (SKIP, s3)" by (simp add: r)
+  ultimately show "(REPEAT c UNTIL b, s1) \<rightarrow>* (SKIP, s3)" by (meson star_trans)
+next
+(* \<And>c s\<^sub>1 s\<^sub>2 b.
+       (c, s\<^sub>1) \<Rightarrow> s\<^sub>2 \<Longrightarrow>
+       (c, s\<^sub>1) \<rightarrow>* (SKIP, s\<^sub>2) \<Longrightarrow>
+       \<not> bval b s\<^sub>2 \<Longrightarrow> (REPEAT c UNTIL b, s\<^sub>1) \<rightarrow>* (SKIP, s\<^sub>2) *)
+  fix c s1 s2 b
+  let ?r = "REPEAT c UNTIL b"
+  let ?if = "IF b THEN ?r ELSE SKIP"
+  assume c: "(c, s1) \<rightarrow>* (SKIP, s2)"
+  assume b: "\<not> bval b s2"
+  have "(?r, s1) \<rightarrow>* (c;;?if, s1)" by simp
+  moreover have "(c;;?if, s1) \<rightarrow>* (SKIP;;?if, s2)" by (simp add: c star_seq2)
+  moreover have "(SKIP;;?if, s2) \<rightarrow>* (?if, s2)" by blast
+  moreover have "(?if, s2) \<rightarrow> (SKIP, s2)" by (simp add: b)
+  then show "(?r, s1) \<rightarrow>* (SKIP, s2)" by (metis (mono_tags, lifting) Repeat calculation(2) calculation(3) star.simps star_trans)
 qed
 
 text\<open>Each case of the induction can be proved automatically:\<close>
@@ -149,6 +194,12 @@ next
   case WhileTrue
   thus ?case
     by(metis While seq_comp small_step.IfTrue star.step[of small_step])
+next
+  case (RepeatTrue c s\<^sub>1 s\<^sub>2 b s\<^sub>3)
+  then show ?case  using big_step.RepeatTrue big_to_small by auto
+next
+  case (RepeatFalse c s\<^sub>1 s\<^sub>2 b)
+  then show ?case by (simp add: big_step.RepeatFalse big_to_small)
 qed
 
 lemma small1_big_continue:
