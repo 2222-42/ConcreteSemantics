@@ -263,14 +263,18 @@ subsection "Execution is deterministic"
 
 text \<open>This proof is automatic.\<close>
 
+(* 
+以下の定理はOrによって成り立たなくなる。
 theorem big_step_determ: "\<lbrakk> (c,s) \<Rightarrow> t; (c,s) \<Rightarrow> u \<rbrakk> \<Longrightarrow> u = t"
-  by (induction arbitrary: u rule: big_step.induct) blast+
+  by (induction arbitrary: u rule: big_step.induct) blast+ *)
 
 text \<open>
   This is the proof as you might present it in a lecture. The remaining
   cases are simple enough to be proved automatically:
 \<close>
 text_raw\<open>\snip{BigStepDetLong}{0}{2}{%\<close>
+(* 
+以下の定理はOrによって成り立たなくなる。
 theorem
   "(c,s) \<Rightarrow> t  \<Longrightarrow>  (c,s) \<Rightarrow> t'  \<Longrightarrow>  t' = t"
 proof (induction arbitrary: t' rule: big_step.induct)
@@ -290,6 +294,6 @@ proof (induction arbitrary: t' rule: big_step.induct)
   from c IHc have "s\<^sub>1' = s\<^sub>1" by blast
   with w IHw show "t' = t" by blast
 qed blast+ \<comment> \<open>prove the rest automatically\<close>
-text_raw\<open>}%endsnip\<close>
+text_raw\<open>}%endsnip\<close> *)
 
 end
