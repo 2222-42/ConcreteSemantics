@@ -16,7 +16,10 @@ IfTrue:  "bval b s \<Longrightarrow> (IF b THEN c\<^sub>1 ELSE c\<^sub>2,s) \<ri
 IfFalse: "\<not>bval b s \<Longrightarrow> (IF b THEN c\<^sub>1 ELSE c\<^sub>2,s) \<rightarrow> (c\<^sub>2,s)" |
 
 While:   "(WHILE b DO c,s) \<rightarrow>
-            (IF b THEN c;; WHILE b DO c ELSE SKIP,s)"
+            (IF b THEN c;; WHILE b DO c ELSE SKIP,s)" |
+
+OrL:      "(l OR r, s) \<rightarrow> (l,s)" |
+OrR:      "(l OR r, s) \<rightarrow> (r,s)"
 
 
 abbreviation
@@ -58,14 +61,17 @@ inductive_cases SeqE[elim]: "(c1;;c2,s) \<rightarrow> ct"
 thm SeqE
 inductive_cases IfE[elim!]: "(IF b THEN c1 ELSE c2,s) \<rightarrow> ct"
 inductive_cases WhileE[elim]: "(WHILE b DO c, s) \<rightarrow> ct"
+inductive_cases OrE[elim!]: "(l OR r, s) \<rightarrow> t"
 
 
 text\<open>A simple property:\<close>
+(* 
+Orによって成り立たなくなる
 lemma deterministic:
   "cs \<rightarrow> cs' \<Longrightarrow> cs \<rightarrow> cs'' \<Longrightarrow> cs'' = cs'"
 apply(induction arbitrary: cs'' rule: small_step.induct)
 apply blast+
-done
+done *)
 
 
 subsection "Equivalence with big-step semantics"
@@ -128,6 +134,20 @@ next
   moreover have "(?if, s) \<rightarrow> (c;; ?w, s)" by (simp add: b)
   moreover have "(c;; ?w,s) \<rightarrow>* (SKIP,t)" by(rule seq_comp[OF c w])
   ultimately show "(WHILE b DO c,s) \<rightarrow>* (SKIP,t)" by (metis star.simps)
+next
+(*  1. \<And>l s1 s2 r.
+       (l, s1) \<Rightarrow> s2 \<Longrightarrow> (l, s1) \<rightarrow>* (SKIP, s2) \<Longrightarrow> (l OR r, s1) \<rightarrow>* (SKIP, s2)　*)
+  fix l s1 s2 r
+  assume "(l, s1) \<Rightarrow> s2"
+  assume "(l, s1) \<rightarrow>* (SKIP, s2)"
+  then show "(l OR r, s1) \<rightarrow>* (SKIP, s2)" by (meson small_step.OrL star.simps)
+next
+(*  2. \<And>r s1 s2 l.
+       (r, s1) \<Rightarrow> s2 \<Longrightarrow> (r, s1) \<rightarrow>* (SKIP, s2) \<Longrightarrow> (l OR r, s1) \<rightarrow>* (SKIP, s2) *)
+  fix l s1 s2 r
+  assume "(r, s1) \<Rightarrow> s2"
+  assume "(r, s1) \<rightarrow>* (SKIP, s2)"
+  then show "(l OR r, s1) \<rightarrow>* (SKIP, s2)" by (meson small_step.OrR star.simps)
 qed
 
 text\<open>Each case of the induction can be proved automatically:\<close>
@@ -149,6 +169,12 @@ next
   case WhileTrue
   thus ?case
     by(metis While seq_comp small_step.IfTrue star.step[of small_step])
+next
+  case (OrL l s1 s2 r)
+  then show ?case by (simp add: big_step.OrL big_to_small)
+next
+  case (OrR r s1 s2 l)
+  then show ?case by (simp add: big_step.OrR big_to_small)
 qed
 
 lemma small1_big_continue:
