@@ -1,6 +1,7 @@
 section "Small-Step Semantics of Commands"
 
-theory Small_Step imports "~~/src/HOL/IMP/Star" "./Big_Step" begin
+theory Ex78_Small_Step
+imports "~~/src/HOL/IMP/Star" "./Ex78_Big_Step" begin
 
 subsection "The transition relation"
 

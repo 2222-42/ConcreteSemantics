@@ -2,7 +2,8 @@
 
 subsection "Big-Step Semantics of Commands"
 
-theory Big_Step imports "./Com" begin
+theory Ex78_Big_Step 
+imports "./Com" begin
 
 text \<open>
 The big-step semantics is a straight-forward inductive definition
