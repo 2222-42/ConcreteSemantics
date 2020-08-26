@@ -5,6 +5,7 @@ begin
 text \<open>
 
 > Working with proofs on the machine language, we will find it convenient for the program counter to admit negative values, 
+> The effect of this choice is that various decomposition lemmas about machine executions have nicer algebraic properties and fewer preconditions than their nat counterparts
 
   In the following, we use the length of lists as integers 
   instead of natural numbers. Instead of converting \<^typ>\<open>nat\<close>
@@ -34,5 +35,8 @@ Operand:   length xs :: nat
 This problem is solved by set declare in top of this theory.
 \<close>
 lemma "0 \<le> i \<Longrightarrow> (xs @ ys) !! i = (if i < size xs then xs !! i else ys !! (i - size xs))"
+  apply(induction xs arbitrary: i)
+   apply (auto simp add: algebra_simps)
+  done
 
 end
