@@ -122,10 +122,26 @@ P' @ P \<turnstile> (size P' + i, s, stk) \<rightarrow> (size P' + i', s', stk')
  *)
 
 (* Lemma 8.3 *)
-lemma "P \<turnstile> (i, s, stk) \<rightarrow>* (i', s', stk') \<Longrightarrow>
+lemma exec_appendL: "P \<turnstile> (i, s, stk) \<rightarrow>* (i', s', stk') \<Longrightarrow>
 P' @ P \<turnstile> (size P' + i, s, stk) \<rightarrow>* (size P' + i', s', stk')"
   apply(induction rule: exec_induct)
    apply simp
   by (meson exec1_appendL star.simps)
+
+lemma exec_appendL_if[intro]:
+  fixes i i' j :: int
+  shows
+  "size P' <= i
+   \<Longrightarrow> P \<turnstile> (i - size P',s,stk) \<rightarrow>* (j,s',stk')
+   \<Longrightarrow> i' = size P' + j
+   \<Longrightarrow> P' @ P \<turnstile> (i,s,stk) \<rightarrow>* (i',s',stk')"
+by (drule exec_appendL[where P'=P']) simp
+
+(* Lemma 8.5 *)
+lemma "\<lbrakk> P \<turnstile> (0,s,stk) \<rightarrow>* (i', s', stk'); 
+size P \<le> i';
+P' \<turnstile> (i' - size P, s', stk') \<rightarrow>* (i'', s'', stk'')\<rbrakk>
+ \<Longrightarrow> P @ P' \<turnstile>  (0, s,stk) \<rightarrow>* (size P + i'', s'', stk'')"
+  by (meson exec_appendL_if exec_appendR star_trans)
 
 end
