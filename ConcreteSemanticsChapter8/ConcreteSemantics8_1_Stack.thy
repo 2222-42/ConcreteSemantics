@@ -138,10 +138,33 @@ lemma exec_appendL_if[intro]:
 by (drule exec_appendL[where P'=P']) simp
 
 (* Lemma 8.5 *)
-lemma "\<lbrakk> P \<turnstile> (0,s,stk) \<rightarrow>* (i', s', stk'); 
+text\<open>The text-book did not write `j''=size P + i'` in the following lemma.
+This lack affects the proof of lemma 8.5.
+\<close>
+lemma exec_append_trans[intro]:"\<lbrakk> 
+P \<turnstile> (0,s,stk) \<rightarrow>* (i', s', stk'); 
 size P \<le> i';
-P' \<turnstile> (i' - size P, s', stk') \<rightarrow>* (i'', s'', stk'')\<rbrakk>
- \<Longrightarrow> P @ P' \<turnstile>  (0, s,stk) \<rightarrow>* (size P + i'', s'', stk'')"
+P' \<turnstile> (i' - size P, s', stk') \<rightarrow>* (i'', s'', stk'');
+j'' = size P + i''
+\<rbrakk>
+ \<Longrightarrow> P @ P' \<turnstile>  (0, s,stk) \<rightarrow>* (j'', s'', stk'')"
   by (meson exec_appendL_if exec_appendR star_trans)
+
+declare Let_def[simp]
+
+subsubsection "8.3 Compilation"
+
+fun acomp :: "aexp \<Rightarrow> instr list" where
+"acomp (N n) = [LOADI n]" |
+"acomp (V x) = [LOAD x]" |
+"acomp (Plus a1 a2) = acomp a1 @ acomp a2 @ [ADD]"
+
+
+(*Lemma 8.6*)
+
+lemma acomp_correct[intro]:
+  "acomp a \<turnstile> (0,s,stk) \<rightarrow>* (size(acomp a),s,aval a s#stk)"
+by (induction a arbitrary: stk) fastforce+
+  
 
 end
