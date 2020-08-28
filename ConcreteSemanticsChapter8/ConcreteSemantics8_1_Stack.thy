@@ -34,7 +34,7 @@ Operand:   length xs :: nat
 
 This problem is solved by set declare in top of this theory.
 \<close>
-lemma "0 \<le> i \<Longrightarrow> (xs @ ys) !! i = (if i < size xs then xs !! i else ys !! (i - size xs))"
+lemma inth_append[simp]: "0 \<le> i \<Longrightarrow> (xs @ ys) !! i = (if i < size xs then xs !! i else ys !! (i - size xs))"
   apply(induction xs arbitrary: i)
   (* Unfortunately, the following method is not derived only by sledgehammer *)
    apply (auto simp add: algebra_simps)
@@ -88,5 +88,44 @@ Without `code_pred exec1`, Following values are not calculated by the following 
   No mode possible for comprehension
 \<close>
 values "{(i, map t [''x'', ''y''], stk ) | i t stk. [LOAD ''y'', STORE ''x''] \<turnstile> (0, <''x'' := 3, ''y'' := 4>, []) \<rightarrow>* (i, t, stk )}"
+
+(*lemma 8.4*)
+lemma iexec_shift [simp]: 
+  "((n+i',s',stk') = iexec x (n+i,s,stk)) \<longleftrightarrow> ((i',s',stk') = iexec x (i,s,stk))"
+  apply(auto split:instr.split)
+  done
+text \<open>The split modifier is the hint to auto to perform a case split whenever it sees
+a case expression over instr. Thus we guide auto towards the case distinction we made in our proof above.\<close>
+
+lemma exec1_appendR: "P \<turnstile> c \<rightarrow> c' \<Longrightarrow> P@P' \<turnstile> c \<rightarrow> c'"
+  apply(auto simp: exec1_def)
+  done
+
+(* lemma 8.2 *)
+lemma exec_appendR: "P \<turnstile> c \<rightarrow>* c' \<Longrightarrow> P@P' \<turnstile> c \<rightarrow>* c'"
+  apply(induction rule: star.induct)
+   apply simp
+  by (meson exec1_appendR star.step)
+
+lemma exec1_appendL:
+  fixes i i' :: int 
+  shows
+  "P \<turnstile> (i,s,stk) \<rightarrow> (i',s',stk') \<Longrightarrow>
+   P' @ P \<turnstile> (size(P')+i,s,stk) \<rightarrow> (size(P')+i',s',stk')"
+  unfolding exec1_def
+  by (auto simp del: iexec.simps)
+
+(* lemma exec1_appendL_other: "P \<turnstile> (i, s, stk) \<rightarrow> (i', s', stk') \<Longrightarrow>
+P' @ P \<turnstile> (size P' + i, s, stk) \<rightarrow> (size P' + i', s', stk')"
+  apply(auto simp: exec1_def) 
+  sledgehammer
+ *)
+
+(* Lemma 8.3 *)
+lemma "P \<turnstile> (i, s, stk) \<rightarrow>* (i', s', stk') \<Longrightarrow>
+P' @ P \<turnstile> (size P' + i, s, stk) \<rightarrow>* (size P' + i', s', stk')"
+  apply(induction rule: exec_induct)
+   apply simp
+  by (meson exec1_appendL star.simps)
 
 end
