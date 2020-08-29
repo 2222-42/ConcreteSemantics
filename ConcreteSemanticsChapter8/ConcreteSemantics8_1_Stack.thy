@@ -176,6 +176,36 @@ fun bcomp :: "bexp \<Rightarrow> bool \<Rightarrow> int \<Rightarrow> instr list
   in cb1 @ cb2)" |
 "bcomp (Less a1 a2) f n =
  acomp a1 @ acomp a2 @ (if f then [JMPLESS n] else [JMPGE n])"
-  
+
+value "bcomp (And (Bc True) (Bc True)) False 3"
+value "bcomp (And (Bc False) (Bc True)) True 3"
+value "bcomp (And (Less (V ''x'') (V ''y'')) (Bc True)) False 3"
+value
+  "bcomp (And (Less (V ''x'') (V ''y'')) (Not(Less (V ''u'') (V ''v''))))
+     False 3"
+
+(* Lemma 8.8 *)
+lemma bcomp_correct[intro]:  fixes n :: int
+  shows"
+0 \<le> n \<Longrightarrow>
+bcomp b f n \<turnstile> (0, s, stk) \<rightarrow>* (size(bcomp b f n) + (if f = bval b s then n else 0), s, stk)
+"
+proof(induction b arbitrary: f n)
+  case (Bc x)
+  then show ?case by fastforce
+next
+  case (Not b)
+(*  then show ?case 
+    using bcomp.simps(2) bval.simps(2) by presburger*)
+  from Not(1)[where f="~f"] Not(2) show ?case by fastforce
+next
+  case (And b1 b2)
+  from And(1)[of "if f then size(bcomp b2 f n) else size(bcomp b2 f n) + n" "False"]
+       And(2)[of n f] And(3)
+  show ?case by fastforce
+next
+  case (Less x1a x2a)
+  then show ?case by fastforce
+qed
 
 end
