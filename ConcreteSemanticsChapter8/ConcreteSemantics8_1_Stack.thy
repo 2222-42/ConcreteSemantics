@@ -208,4 +208,20 @@ next
   then show ?case by fastforce
 qed
 
+fun ccomp :: "com \<Rightarrow> instr list" where
+"ccomp SKIP = []" |
+"ccomp (x ::= a) = acomp a @ [STORE x]" |
+"ccomp (c\<^sub>1;;c\<^sub>2) = ccomp c\<^sub>1 @ ccomp c\<^sub>2" |
+"ccomp (IF b THEN c\<^sub>1 ELSE c\<^sub>2) =
+  (let cc\<^sub>1 = ccomp c\<^sub>1; cc\<^sub>2 = ccomp c\<^sub>2; cb = bcomp b False (size cc\<^sub>1 + 1)
+   in cb @ cc\<^sub>1 @ JMP (size cc\<^sub>2) # cc\<^sub>2)" |
+"ccomp (WHILE b DO c) =
+ (let cc = ccomp c; cb = bcomp b False (size cc + 1)
+  in cb @ cc @ [JMP (-(size cb + size cc + 1))])"
+
+value "ccomp
+ (IF Less (V ''u'') (N 1) THEN ''u'' ::= Plus (V ''u'') (N 1)
+  ELSE ''v'' ::= V ''u'')"
+
+value "ccomp (WHILE Less (V ''u'') (N 1) DO (''u'' ::= Plus (V ''u'') (N 1)))"
 end
