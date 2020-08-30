@@ -308,58 +308,9 @@ where
   "P \<turnstile> c \<rightarrow>^0 c' = (c'=c)" |
   "P \<turnstile> c \<rightarrow>^(Suc n) c'' = (\<exists>c'. (P \<turnstile> c \<rightarrow> c') \<and> P \<turnstile> c' \<rightarrow>^n c'')"
 
-lemma exec_n_exec:
-  "P \<turnstile> c \<rightarrow>^n c' \<Longrightarrow> P \<turnstile> c \<rightarrow>* c'"
-  by (induct n arbitrary: c) (auto intro: star.step)
 
-lemma exec_0 [intro!]: "P \<turnstile> c \<rightarrow>^0 c" by simp
 
-lemma exec_Suc:
-  "\<lbrakk> P \<turnstile> c \<rightarrow> c'; P \<turnstile> c' \<rightarrow>^n c'' \<rbrakk> \<Longrightarrow> P \<turnstile> c \<rightarrow>^(Suc n) c''" 
-  by (fastforce simp del: split_paired_Ex)
 
-lemma exec_exec_n:
-  "P \<turnstile> c \<rightarrow>* c' \<Longrightarrow> \<exists>n. P \<turnstile> c \<rightarrow>^n c'"
-  by (induct rule: star.induct) (auto intro: exec_Suc)
-    
-lemma exec_eq_exec_n:
-  "(P \<turnstile> c \<rightarrow>* c') = (\<exists>n. P \<turnstile> c \<rightarrow>^n c')"
-  by (blast intro: exec_exec_n exec_n_exec)
-
-lemma exec_n_Nil [simp]:
-  "[] \<turnstile> c \<rightarrow>^k c' = (c' = c \<and> k = 0)"
-  by (induct k) (auto simp: exec1_def)
-
-lemma exec1_exec_n [intro!]:
-  "P \<turnstile> c \<rightarrow> c' \<Longrightarrow> P \<turnstile> c \<rightarrow>^1 c'"
-  by (cases c') simp
-
-lemma exec_n_step:
-  "n \<noteq> n' \<Longrightarrow> 
-  P \<turnstile> (n,stk,s) \<rightarrow>^k (n',stk',s') = 
-  (\<exists>c. P \<turnstile> (n,stk,s) \<rightarrow> c \<and> P \<turnstile> c \<rightarrow>^(k - 1) (n',stk',s') \<and> 0 < k)"
-  by (cases k) auto
-
-lemma exec1_end:
-  "size P <= fst c \<Longrightarrow> \<not> P \<turnstile> c \<rightarrow> c'"
-  by (auto simp: exec1_def)
-
-lemma exec_n_end:
-  "size P <= (n::int) \<Longrightarrow> 
-  P \<turnstile> (n,s,stk) \<rightarrow>^k (n',s',stk') = (n' = n \<and> stk'=stk \<and> s'=s \<and> k =0)"
-  by (cases k) (auto simp: exec1_end)
-
-lemmas exec_n_simps = exec_n_step exec_n_end
-
-lemma succs_simps [simp]: 
-  "succs [ADD] n = {n + 1}"
-  "succs [LOADI v] n = {n + 1}"
-  "succs [LOAD x] n = {n + 1}"
-  "succs [STORE x] n = {n + 1}"
-  "succs [JMP i] n = {n + 1 + i}"
-  "succs [JMPGE i] n = {n + 1 + i, n + 1}"
-  "succs [JMPLESS i] n = {n + 1 + i, n + 1}"
-  by (auto simp: succs_def isuccs_def)
 
 lemma succs_empty [iff]: "succs [] n = {}"
   by (simp add: succs_def)
@@ -380,35 +331,31 @@ goal (2 subgoals):
     sorry
   thus "?x \<union> ?xs \<subseteq> succs (x#xs) n" by blast
 qed
-lemma succs_shift:
-  "(p - n \<in> succs P 0) = (p \<in> succs P n)" 
-  by (fastforce simp: succs_def isuccs_def split: instr.split)
-lemma inj_op_plus [simp]:
-  "inj ((+) (i::int))"
-  by (metis add_minus_cancel inj_on_inverseI)
 
-lemma succs_set_shift [simp]:
-  "(+) i ` succs xs 0 = succs xs i"
-  by (force simp: succs_shift [where n=i, symmetric] intro: set_eqI)
+
+
 (* Lemma 8.10 *)
 lemma succs_append_otherway [simp]:
   "succs (xs @ ys) n = succs xs n \<union> succs ys (n + size xs)"
 proof(induction xs arbitrary:n)
   case Nil
   then show ?case 
-    by simp
+    by simp 
+    (*using succs_empty*)
 next
   case (Cons a xs)
 (* 1. \<And>a xs n. (\<And>n. succs (xs @ ys) n = succs xs n \<union> succs ys (n + size xs)) \<Longrightarrow> succs ((a # xs) @ ys) n = succs (a # xs) n \<union> succs ys (n + size (a # xs))*)
-  then show ?case using algebra_simps sorry
+  then show ?case by (auto simp: algebra_simps succs_Cons)
 qed
 
+text\<open>the following way what written in Compiler2 is doned with exec_n_exec \<close>
+(*
 lemma succs_append [simp]:
   "succs (xs @ ys) n = succs xs n \<union> succs ys (n + size xs)"
   apply(induct xs arbitrary: n)
    apply(auto simp: succs_Cons algebra_simps)
   done
-
+*)
 
 
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
