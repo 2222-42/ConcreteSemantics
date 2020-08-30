@@ -128,6 +128,12 @@ P' @ P \<turnstile> (size P' + i, s, stk) \<rightarrow>* (size P' + i', s', stk'
    apply simp
   by (meson exec1_appendL star.simps)
 
+(*this lemma is needed to prove the IfFalse part of lemma 8.9*)
+lemma exec_Cons_1 [intro]:
+  "P \<turnstile> (0,s,stk) \<rightarrow>* (j,t,stk') \<Longrightarrow>
+  instr#P \<turnstile> (1,s,stk) \<rightarrow>* (1+j,t,stk')"
+by (drule exec_appendL[where P'="[instr]"]) simp
+
 lemma exec_appendL_if[intro]:
   fixes i i' j :: int
   shows
@@ -224,4 +230,57 @@ value "ccomp
   ELSE ''v'' ::= V ''u'')"
 
 value "ccomp (WHILE Less (V ''u'') (N 1) DO (''u'' ::= Plus (V ''u'') (N 1)))"
+
+subsection "8.4 Preservation of Semantics"
+
+(* Lemma 8.9  *)
+lemma ccomp_correctness: "(c,s) \<Rightarrow> t \<Longrightarrow> ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk)"
+proof(induction arbitrary: stk rule: big_step_induct)
+case (Skip s)
+  then show ?case by (fastforce)
+next
+  case (Assign x a s)
+  then show ?case by (fastforce simp:fun_upd_def cong: if_cong)
+next
+  case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
+  let ?cc1 = "ccomp c\<^sub>1" let ?cc2 = "ccomp c\<^sub>2"
+  have "?cc1 @ ?cc2 \<turnstile> (0, s\<^sub>1, stk) \<rightarrow>* (size ?cc1, s\<^sub>2, stk)" 
+    by (simp add: Seq.IH(1) exec_appendR)
+  moreover have "?cc1 @ ?cc2 \<turnstile> (size ?cc1, s\<^sub>2, stk) \<rightarrow>* (size (?cc1 @ ?cc2), s\<^sub>3, stk)" using Seq.IH(2) by fastforce
+(* ccomp (?c\<^sub>12;; ?c\<^sub>22) \<turnstile> (0, ?s\<^sub>12, ?stka2) \<rightarrow>* (size (ccomp (?c\<^sub>12;; ?c\<^sub>22)), ?s\<^sub>32, ?stka2)  *)
+    ultimately show ?case 
+      by (metis (no_types, lifting) ccomp.simps(3) star_trans)
+next
+  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
+  then show ?case by fastforce
+next
+  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  then show ?case by fastforce
+next
+  case (WhileFalse b s c)
+  then show ?case by fastforce
+next
+  case (WhileTrue b s1 c s2 s3)
+  let ?cc = "ccomp c"
+  let ?cb = "bcomp b False (size ?cc + 1)"
+  let ?cw = "ccomp (WHILE b DO c)"
+(*
+    bval b s\<^sub>1
+    (c, s\<^sub>1) \<Rightarrow> s\<^sub>2
+    (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3
+    ccomp c \<turnstile> (0, s\<^sub>1, ?stk) \<rightarrow>* (size (ccomp c), s\<^sub>2, ?stk)
+    ccomp (WHILE b DO c) \<turnstile> (0, s\<^sub>2, ?stk) \<rightarrow>* (size (ccomp (WHILE b DO c)), s\<^sub>3, ?stk)
+
+goal (1 subgoal):
+ 1. ccomp (WHILE b DO c) \<turnstile> (0, s\<^sub>1, stk) \<rightarrow>* (size (ccomp (WHILE b DO c)), s\<^sub>3, stk)
+*)
+  have "?cw \<turnstile> (0,s1,stk) \<rightarrow>* (size ?cb,s1,stk)" using \<open>bval b s1\<close> by fastforce
+  have "?cw \<turnstile> (size ?cb,s1,stk) \<rightarrow>* (size ?cb + size ?cc,s2,stk)" using WhileTrue.IH by fastforce
+  moreover have "?cw \<turnstile> (size ?cb + size ?cc,s2,stk) \<rightarrow>* (0,s2,stk)" by fastforce
+  moreover have "?cw \<turnstile> (0,s2,stk) \<rightarrow>* (size ?cw,s3,stk)" 
+    using WhileTrue.IH(2) by blast
+  ultimately  show ?case 
+    by (meson \<open>ccomp (WHILE b DO c) \<turnstile> (0, s1, stk) \<rightarrow>* (size (bcomp b False (size (ccomp c) + 1)), s1, stk)\<close> star_trans)
+qed
+
 end
