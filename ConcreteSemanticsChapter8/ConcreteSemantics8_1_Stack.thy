@@ -324,11 +324,41 @@ goal (2 subgoals):
  2. isuccs x n \<union> succs xs (1 + n) \<subseteq> succs (x # xs) n
 *)
   let ?isuccs = "\<lambda>p P n i::int. 0 \<le> i \<and> i < size P \<and> p \<in> isuccs (P!!i) (n+i)"
+
   have "p \<in> ?x \<union> ?xs" if assm: "p \<in> succs (x#xs) n" for p
-    sorry
+  proof -
+    (* take i becasuse assumption cotains list*)
+    from assm obtain i::int where isuccs: "?isuccs p (x#xs) n i" unfolding succs_def by auto
+    show ?thesis
+    proof cases
+      assume "i = 0"
+      with isuccs
+      show ?thesis by fastforce
+    next
+      assume "i \<noteq> 0"
+      with isuccs
+      have "?isuccs p xs (n+1) (i -1)" by fastforce
+      then have "p \<in> ?xs" unfolding succs_def by fastforce
+      show ?thesis 
+        by (simp add: \<open>p \<in> succs xs (1 + n)\<close>)
+    qed
+  qed
   thus "succs (x#xs) n \<subseteq> ?x \<union> ?xs" ..
+
   have "p \<in> succs (x#xs) n" if assm: "p \<in> ?x \<or> p \<in> ?xs" for p
-    sorry
+  proof -
+    from assm show ?thesis
+    proof 
+      assume "p \<in> ?x" thus ?thesis by (auto simp add: succs_def)
+    next
+      assume "p \<in> ?xs" 
+      (* in the following where contains (1+n) not (n+1), the latter will fail to prove *)
+      then obtain i where "?isuccs p xs (1+n) i" unfolding succs_def by auto
+      hence "?isuccs p (x#xs) n (i +1)" by (simp add: algebra_simps)
+      thus ?thesis unfolding succs_def 
+        by blast
+    qed
+  qed
   thus "?x \<union> ?xs \<subseteq> succs (x#xs) n" by blast
 qed
 
