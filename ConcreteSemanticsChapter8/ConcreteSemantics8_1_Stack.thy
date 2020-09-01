@@ -310,8 +310,6 @@ where
 
 
 
-
-
 lemma succs_empty [iff]: "succs [] n = {}"
   by (simp add: succs_def)
 
@@ -387,6 +385,25 @@ lemma succs_append [simp]:
   done
 *)
 
+(* Lemma 8.11 *)
+lemma exec_n_exec:
+  "P \<turnstile> c \<rightarrow>^n c' \<Longrightarrow> P \<turnstile> c \<rightarrow>* c'"
+  apply(induction n arbitrary: c)
+   apply simp
+  by (meson exec_n.simps(2) star.step)
+
+lemma exec_exec_n:
+  "P \<turnstile> c \<rightarrow>* c' \<Longrightarrow> \<exists>n. P \<turnstile> c \<rightarrow>^n c'"
+  apply(induction rule:star.induct)
+  using exec_n.simps(1) apply blast
+  using exec_n.simps(2) by blast
+
+lemma exec_eq_exec_n:
+  "(P \<turnstile> c \<rightarrow>* c') = (\<exists>n. P \<turnstile> c \<rightarrow>^n c')"
+  using exec_exec_n exec_n_exec by blast
+
+
+  
 
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
   sorry
