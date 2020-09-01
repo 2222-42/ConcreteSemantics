@@ -308,8 +308,6 @@ where
   "P \<turnstile> c \<rightarrow>^0 c' = (c'=c)" |
   "P \<turnstile> c \<rightarrow>^(Suc n) c'' = (\<exists>c'. (P \<turnstile> c \<rightarrow> c') \<and> P \<turnstile> c' \<rightarrow>^n c'')"
 
-
-
 lemma succs_empty [iff]: "succs [] n = {}"
   by (simp add: succs_def)
 
@@ -360,6 +358,34 @@ goal (2 subgoals):
   thus "?x \<union> ?xs \<subseteq> succs (x#xs) n" by blast
 qed
 
+lemma succs_simps [simp]: 
+  "succs [ADD] n = {n + 1}"
+  "succs [LOADI v] n = {n + 1}"
+  "succs [LOAD x] n = {n + 1}"
+  "succs [STORE x] n = {n + 1}"
+  "succs [JMP i] n = {n + 1 + i}"
+  "succs [JMPGE i] n = {n + 1 + i, n + 1}"
+  "succs [JMPLESS i] n = {n + 1 + i, n + 1}"
+  by (auto simp: succs_def isuccs_def)
+
+
+lemma succs_iexec1:
+  assumes "c' = iexec (P!!i) (i,s,stk)" "0 \<le> i" "i < size P"
+  shows "fst c' \<in> succs P 0"
+  using assms by (auto simp: succs_def isuccs_def split: instr.split)
+
+lemma succs_shift:
+  "(p - n \<in> succs P 0) = (p \<in> succs P n)" 
+  by (fastforce simp: succs_def isuccs_def split: instr.split)
+  
+lemma inj_op_plus [simp]:
+  "inj ((+) (i::int))"
+  by (metis add_minus_cancel inj_on_inverseI)
+
+lemma succs_set_shift [simp]:
+  "(+) i ` succs xs 0 = succs xs i"
+  by (force simp: succs_shift [where n=i, symmetric] intro: set_eqI)
+
 
 
 (* Lemma 8.10 *)
@@ -402,7 +428,57 @@ lemma exec_eq_exec_n:
   "(P \<turnstile> c \<rightarrow>* c') = (\<exists>n. P \<turnstile> c \<rightarrow>^n c')"
   using exec_exec_n exec_n_exec by blast
 
+(* Lemma 8.12. *)
 
+(* To prove the following lemmas, it is needed to show some of the `succs_xxx`.
+Especially, proving exits_simps, this needs simplification of succs lemma named `succs_simps`
+ *)
+lemma exits_append [simp]:
+  "exits (xs @ ys) = exits xs \<union> ((+) (size xs)) ` exits ys - 
+                     {0..<size xs + size ys}" 
+  by (auto simp: exits_def image_set_diff)
+  
+lemma exits_single:
+  "exits [x] = isuccs x 0 - {0}"
+  by (auto simp: exits_def succs_def)
+  
+lemma exits_Cons:
+  "exits (x # xs) = (isuccs x 0 - {0}) \<union> ((+) 1) ` exits xs - 
+                     {0..<1 + size xs}" 
+  using exits_append [of "[x]" xs]
+  by (simp add: exits_single)
+
+lemma exits_empty [iff]: "exits [] = {}" by (simp add: exits_def)
+
+lemma exits_simps [simp]:
+  "exits [ADD] = {1}"
+  "exits [LOADI v] = {1}"
+  "exits [LOAD x] = {1}"
+  "exits [STORE x] = {1}"
+  "i \<noteq> -1 \<Longrightarrow> exits [JMP i] = {1 + i}"
+  "i \<noteq> -1 \<Longrightarrow> exits [JMPGE i] = {1 + i, 1}"
+  "i \<noteq> -1 \<Longrightarrow> exits [JMPLESS i] = {1 + i, 1}"
+  by (auto simp: exits_def)
+
+lemma acomp_succs [simp]:
+  "succs (acomp a) n = {n + 1 .. n + size (acomp a)}"
+  apply(induction a arbitrary: n)
+    apply(auto simp: exits_def)
+  done
+(*In the above lemma, `apply(auto simp: exits_def)` needs many subgoals.
+So you need prove them as lemma named "exits_simps".
+*)
+
+lemma acomp_size:
+  "(1::int) \<le> size (acomp a)"
+  apply(induction a)
+    apply(auto)
+  done
+
+lemma acomp_exits [simp]:
+  "exits (acomp a) = {size (acomp a)}"
+  apply(auto simp: acomp_size exits_def)
+  done
   
 
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
