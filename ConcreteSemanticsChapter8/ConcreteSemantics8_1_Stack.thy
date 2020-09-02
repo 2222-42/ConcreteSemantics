@@ -479,7 +479,44 @@ lemma acomp_exits [simp]:
   "exits (acomp a) = {size (acomp a)}"
   apply(auto simp: acomp_size exits_def)
   done
-  
+
+
+(* Lemma 8.13. 
+we settle for providing an upper bound on the possible successors of bcomp.
+*)
+
+lemma bcomp_succs:
+  "0 \<le> i \<Longrightarrow>
+  succs (bcomp b f i) n \<subseteq> {n .. n + size (bcomp b f i)}
+                           \<union> {n + i + size (bcomp b f i)}" 
+proof(induction b arbitrary: f i n)
+  case (Bc x)
+  then show ?case by auto
+next
+  case (Not b)
+  then show ?case by auto
+next
+  case (And b1 b2)
+  from And.prems
+  show ?case by (cases f) (auto dest: And.IH [THEN subsetD, rotated]) 
+next
+  case (Less x1a x2a)
+  then show ?case by auto
+qed
+
+lemmas bcomp_succsD [dest!] = bcomp_succs [THEN subsetD, rotated]
+(* theorem bcomp_succsD: 
+?c \<in> succs (bcomp ?b ?f ?i) ?n \<Longrightarrow> 
+0 \<le> ?i \<Longrightarrow> 
+?c \<in> {?n..?n + size (bcomp ?b ?f ?i)} \<union> {?n + ?i + size (bcomp ?b ?f ?i)} *)
+
+lemma bcomp_exits:
+  fixes i :: int
+  shows 
+  "0 \<le> i \<Longrightarrow>
+  exits (bcomp b f i) \<subseteq> {size (bcomp b f i), i + size (bcomp b f i)}"
+  apply(auto simp:exits_def)
+  done
 
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
   sorry
