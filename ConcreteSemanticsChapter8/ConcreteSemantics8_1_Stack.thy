@@ -546,6 +546,7 @@ lemma ccomp_exits:
   "exits (ccomp c) \<subseteq> {size (ccomp c)}"
   using ccomp_succs [of c 0] by (auto simp: exits_def)
 
+(* Lemma 8.15 (Decomposition of machine executions). *)
 lemma exec_n_split:
   fixes i j :: int
   assumes "P @ c @ P' \<turnstile> (size P + i, s) \<rightarrow>^n (j, s')"
