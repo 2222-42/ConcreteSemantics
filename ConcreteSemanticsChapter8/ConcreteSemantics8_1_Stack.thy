@@ -518,6 +518,53 @@ lemma bcomp_exits:
   apply(auto simp:exits_def)
   done
 
+(* Lemma 8.14. *)
+
+lemma ccomp_succs:
+  "succs (ccomp c) n \<subseteq> {n..n + size (ccomp c)}"
+proof(induction c arbitrary: n)
+  case SKIP
+  then show ?case by simp
+next
+  case (Assign x1 x2)
+  then show ?case by simp
+next
+  case (Seq c1 c2)
+  from Seq.prems
+  show ?case by (fastforce dest: Seq.IH[THEN subsetD])
+next
+  case (If x1 c1 c2)
+  from If.prems
+  show ?case by (auto dest: If.IH[THEN subsetD] simp: isuccs_def succs_Cons)
+next
+  case (While x1 c)
+  from While.prems
+  show ?case by (auto dest: While.IH[THEN subsetD])
+qed
+
+lemma ccomp_exits:
+  "exits (ccomp c) \<subseteq> {size (ccomp c)}"
+  using ccomp_succs [of c 0] by (auto simp: exits_def)
+
+lemma exec_n_split:
+  fixes i j :: int
+  assumes "P @ c @ P' \<turnstile> (size P + i, s) \<rightarrow>^n (j, s')"
+          "0 \<le> i" "i < size c" 
+          "j \<notin> {size P ..< size P + size c}"
+  shows "\<exists>s'' (i'::int) k m. 
+                   c \<turnstile> (i, s) \<rightarrow>^k (i', s'') \<and>
+                   i' \<in> exits c \<and> 
+                   P @ c @ P' \<turnstile> (size P + i', s'') \<rightarrow>^m (j, s') \<and>
+                   n = k + m" 
+  using assms proof (induction n arbitrary: i j s)
+case 0
+  then show ?case 
+    by simp
+next
+case (Suc n)
+  then show ?case sorry
+qed
+
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
   sorry
 
