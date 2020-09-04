@@ -387,7 +387,6 @@ lemma succs_set_shift [simp]:
   by (force simp: succs_shift [where n=i, symmetric] intro: set_eqI)
 
 
-
 (* Lemma 8.10 *)
 lemma succs_append_otherway [simp]:
   "succs (xs @ ys) n = succs xs n \<union> succs ys (n + size xs)"
@@ -518,6 +517,11 @@ lemma bcomp_exits:
   apply(auto simp:exits_def)
   done
 
+lemma bcomp_exitsD [dest!]:
+  "p \<in> exits (bcomp b f i) \<Longrightarrow> 0 \<le> i \<Longrightarrow> 
+  p = size (bcomp b f i) \<or> p = i + size (bcomp b f i)"
+  using bcomp_exits by auto
+
 (* Lemma 8.14. *)
 
 lemma ccomp_succs:
@@ -547,6 +551,27 @@ lemma ccomp_exits:
   using ccomp_succs [of c 0] by (auto simp: exits_def)
 
 (* Lemma 8.15 (Decomposition of machine executions). *)
+lemma exec_Suc:
+  "\<lbrakk> P \<turnstile> c \<rightarrow> c'; P \<turnstile> c' \<rightarrow>^n c'' \<rbrakk> \<Longrightarrow> P \<turnstile> c \<rightarrow>^(Suc n) c''" 
+  by (fastforce simp del: split_paired_Ex)
+
+lemma exec_n_Nil [simp]:
+  "[] \<turnstile> c \<rightarrow>^k c' = (c' = c \<and> k = 0)"
+  by (induct k) (auto simp: exec1_def)
+
+lemma exec1_exec_n [intro!]:
+  "P \<turnstile> c \<rightarrow> c' \<Longrightarrow> P \<turnstile> c \<rightarrow>^1 c'"
+  by (cases c') simp
+
+lemma exec1_split:
+  fixes i j :: int
+  shows
+  "P @ c @ P' \<turnstile> (size P + i, s) \<rightarrow> (j,s') \<Longrightarrow> 0 \<le> i \<Longrightarrow> i < size c \<Longrightarrow> 
+  c \<turnstile> (i,s) \<rightarrow> (j - size P, s')"
+  apply(auto simp: exec1_def)
+  apply(auto split: instr.splits)
+  done
+
 lemma exec_n_split:
   fixes i j :: int
   assumes "P @ c @ P' \<turnstile> (size P + i, s) \<rightarrow>^n (j, s')"
@@ -557,13 +582,43 @@ lemma exec_n_split:
                    i' \<in> exits c \<and> 
                    P @ c @ P' \<turnstile> (size P + i', s'') \<rightarrow>^m (j, s') \<and>
                    n = k + m" 
-  using assms proof (induction n arbitrary: i j s)
-case 0
+using assms proof (induction n arbitrary: i j s)
+  case 0
   then show ?case 
     by simp
 next
-case (Suc n)
-  then show ?case sorry
+  case (Suc n)
+  have i: "0 \<le> i" "i < size c" by fact+
+  from Suc.prems
+  have j: "\<not> (size P \<le> j \<and> j < size P + size c)" by simp
+  obtain i0 s0 where
+    step: "P @ c @ P' \<turnstile> (size P + i, s) \<rightarrow> (i0,s0)" and
+    rest: "P @ c @ P' \<turnstile> (i0,s0) \<rightarrow>^n (j, s')"
+    using Suc.prems(1) by auto
+  from step i
+  have c: "c \<turnstile> (i,s) \<rightarrow> (i0 - size P, s0)" by(rule exec1_split) 
+
+  have "i0 = size P + (i0 - size P) " by simp
+  then obtain j0::int where j0: "i0 = size P + j0" ..
+
+note split_paired_Ex [simp del]
+
+  have ?case if assm: "j0 \<in> {0 ..< size c}"
+  proof -
+    from assm j0 j rest c
+    show ?case by (fastforce dest!: Suc.IH intro!: exec_Suc)
+  qed
+  moreover have ?case if assm: "j0 \<notin> {0 ..< size c}"
+  proof -
+    from c j0 have "j0 \<in> succs c 0" 
+      by (auto dest: succs_iexec1 simp: exec1_def simp del: iexec.simps)
+    with assm have "j0 \<in> exits c" by (simp add: exits_def)
+    with c j0 rest show ?case by fastforce
+    (* exec1_exec_n is needed to prove over case. *)
+(*      by (metis add.commute add.left_neutral add_Suc diff_eq_eq exec_n.simps(1) exec_n.simps(2)) *)
+  qed
+  ultimately show ?case 
+    by blast
 qed
 
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
