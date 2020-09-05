@@ -623,6 +623,8 @@ qed
 
 subsection \<open>Concrete symbolic execution steps\<close>
 
+lemma exec_0 [intro!]: "P \<turnstile> c \<rightarrow>^0 c" by simp
+
 lemma exec_n_step:
   "n \<noteq> n' \<Longrightarrow> 
   P \<turnstile> (n,stk,s) \<rightarrow>^k (n',stk',s') = 
@@ -640,6 +642,48 @@ lemma exec_n_end:
 
 lemmas exec_n_simps = exec_n_step exec_n_end
 
+lemma exec1_drop_left:
+  fixes i n :: int
+  assumes "P1 @ P2 \<turnstile> (i, s, stk) \<rightarrow> (n, s', stk')" and "size P1 \<le> i"
+  shows "P2 \<turnstile> (i - size P1, s, stk) \<rightarrow> (n - size P1, s', stk')"
+proof -
+  have "i = size P1 + (i - size P1)" by simp 
+  then obtain i' :: int where "i = size P1 + i'" ..
+  moreover
+  have "n = size P1 + (n - size P1)" by simp 
+  then obtain n' :: int where "n = size P1 + n'" ..
+  ultimately 
+  show ?thesis using assms 
+    by (clarsimp simp: exec1_def simp del: iexec.simps)
+qed
+
+lemma exec_n_drop_left:
+  fixes i n :: int
+  assumes "P @ P' \<turnstile> (i, s, stk) \<rightarrow>^k (n, s', stk')"
+          "size P \<le> i" "exits P' \<subseteq> {0..}"
+  shows "P' \<turnstile> (i - size P, s, stk) \<rightarrow>^k (n - size P, s', stk')"
+using assms proof (induction k arbitrary: i s stk)
+  case 0 thus ?case by simp
+next
+  case (Suc k)
+  from Suc.prems
+  obtain i' s'' stk'' where
+    step: "P @ P' \<turnstile> (i, s, stk) \<rightarrow> (i', s'', stk'')" and
+    rest: "P @ P' \<turnstile> (i', s'', stk'') \<rightarrow>^k (n, s', stk')"
+    by auto
+  from step \<open>size P \<le> i\<close>
+  have *: "P' \<turnstile> (i - size P, s, stk) \<rightarrow> (i' - size P, s'', stk'')" 
+    by (rule exec1_drop_left)
+  then have "i' - size P \<in> succs P' 0"
+    by (fastforce dest!: succs_iexec1 simp: exec1_def simp del: iexec.simps)
+  with \<open>exits P' \<subseteq> {0..}\<close>
+  have "size P \<le> i'" by (auto simp: exits_def)
+  from rest this \<open>exits P' \<subseteq> {0..}\<close>     
+  have "P' \<turnstile> (i' - size P, s'', stk'') \<rightarrow>^k (n - size P, s', stk')"
+    by (rule Suc.IH)
+  with * show ?case by auto
+qed
+
 lemma exec_n_split_full:
   fixes j :: int
   assumes exec: "P @ P' \<turnstile> (0,s,stk) \<rightarrow>^k (j, s', stk')"
@@ -648,7 +692,22 @@ lemma exec_n_split_full:
   assumes exits: "exits P' \<subseteq> {0..}"
   shows "\<exists>k1 k2 s'' stk''. P \<turnstile> (0,s,stk) \<rightarrow>^k1 (size P, s'', stk'') \<and> 
                            P' \<turnstile> (0,s'',stk'') \<rightarrow>^k2 (j - size P, s', stk')"
-  sorry
+proof (cases "P")
+  case Nil
+  then show ?thesis 
+    using exec by auto
+next
+  case (Cons a list)
+  hence "0 < size P" by simp
+  with exec P closed
+  obtain k1 k2 s'' stk'' where
+    1: "P \<turnstile> (0,s,stk) \<rightarrow>^k1 (size P, s'', stk'')" and
+    2: "P @ P' \<turnstile> (size P,s'',stk'') \<rightarrow>^k2 (j, s', stk')" 
+    by (auto dest!: exec_n_split [where P="[]" and i=0, simplified])
+  moreover have "j = size P + (j - size P)" by simp
+  then obtain j0 :: int where "j = size P + j0" ..
+  ultimately show ?thesis using exits by (fastforce dest: exec_n_drop_left)
+qed
 
 (* Lemma 8.16 (Correctness of acomp, reverse direction). *)
 
