@@ -621,6 +621,59 @@ note split_paired_Ex [simp del]
     by blast
 qed
 
+subsection \<open>Concrete symbolic execution steps\<close>
+
+lemma exec_n_step:
+  "n \<noteq> n' \<Longrightarrow> 
+  P \<turnstile> (n,stk,s) \<rightarrow>^k (n',stk',s') = 
+  (\<exists>c. P \<turnstile> (n,stk,s) \<rightarrow> c \<and> P \<turnstile> c \<rightarrow>^(k - 1) (n',stk',s') \<and> 0 < k)"
+  by (cases k) auto
+
+lemma exec1_end:
+  "size P <= fst c \<Longrightarrow> \<not> P \<turnstile> c \<rightarrow> c'"
+  by (auto simp: exec1_def)
+
+lemma exec_n_end:
+  "size P <= (n::int) \<Longrightarrow> 
+  P \<turnstile> (n,s,stk) \<rightarrow>^k (n',s',stk') = (n' = n \<and> stk'=stk \<and> s'=s \<and> k =0)"
+  by (cases k) (auto simp: exec1_end)
+
+lemmas exec_n_simps = exec_n_step exec_n_end
+
+lemma exec_n_split_full:
+  fixes j :: int
+  assumes exec: "P @ P' \<turnstile> (0,s,stk) \<rightarrow>^k (j, s', stk')"
+  assumes P: "size P \<le> j" 
+  assumes closed: " exits P \<subseteq> {size P}"
+  assumes exits: "exits P' \<subseteq> {0..}"
+  shows "\<exists>k1 k2 s'' stk''. P \<turnstile> (0,s,stk) \<rightarrow>^k1 (size P, s'', stk'') \<and> 
+                           P' \<turnstile> (0,s'',stk'') \<rightarrow>^k2 (j - size P, s', stk')"
+  sorry
+
+(* Lemma 8.16 (Correctness of acomp, reverse direction). *)
+
+
+lemma acomp_exec_n [dest!]:
+  "acomp a \<turnstile> (0,s,stk) \<rightarrow>^n (size (acomp a),s',stk') \<Longrightarrow> 
+  s' = s \<and> stk' = aval a s#stk"
+proof(induction a arbitrary: n s' stk stk')
+case (N x)
+  then show ?case by (auto simp: exec_n_simps exec1_def)
+next
+case (V x)
+  then show ?case  by (auto simp: exec_n_simps exec1_def)
+next
+  case (Plus a1 a2)
+  from Plus.prems
+  have "acomp a1 @ acomp a2 @ [ADD] \<turnstile> (0,s,stk) \<rightarrow>^n (size (acomp a1) + (size (acomp a2) + 1), s', stk')"
+    by (simp add: algebra_simps)
+  then obtain n1 s1 stk1 n2 s2 stk2 n3 where 
+    "acomp a1 \<turnstile> (0,s,stk) \<rightarrow>^n1 (size (acomp a1), s1, stk1)"
+    "acomp a2 \<turnstile> (0,s1,stk1) \<rightarrow>^n2 (size (acomp a2), s2, stk2)" 
+       "[ADD] \<turnstile> (0,s2,stk2) \<rightarrow>^n3 (1, s', stk')" by (auto dest!: exec_n_split_full)
+  then show ?case by (fastforce dest: Plus.IH simp: exec_n_simps exec1_def)
+qed
+
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
   sorry
 
