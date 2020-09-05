@@ -733,7 +733,75 @@ next
   then show ?case by (fastforce dest: Plus.IH simp: exec_n_simps exec1_def)
 qed
 
+(*Lemma 8.17 (Correctness of bcomp, reverse direction).*)
+
+lemma exec_n_drop_right:
+  fixes j :: int
+  assumes "c @ P' \<turnstile> (0, s) \<rightarrow>^n (j, s')" "j \<notin> {0..<size c}"
+  shows "\<exists>s'' i' k m. 
+          (if c = [] then s'' = s \<and> i' = 0 \<and> k = 0
+           else c \<turnstile> (0, s) \<rightarrow>^k (i', s'') \<and>
+           i' \<in> exits c) \<and> 
+           c @ P' \<turnstile> (i', s'') \<rightarrow>^m (j, s') \<and>
+           n = k + m"
+  using assms
+  by (cases "c = []")
+     (auto dest: exec_n_split [where P="[]", simplified])
+
+lemma bcomp_split:
+  fixes i j :: int
+  assumes "bcomp b f i @ P' \<turnstile> (0, s, stk) \<rightarrow>^n (j, s', stk')" 
+          "j \<notin> {0..<size (bcomp b f i)}" "0 \<le> i"
+  shows "\<exists>s'' stk'' (i'::int) k m. 
+           bcomp b f i \<turnstile> (0, s, stk) \<rightarrow>^k (i', s'', stk'') \<and>
+           (i' = size (bcomp b f i) \<or> i' = i + size (bcomp b f i)) \<and>
+           bcomp b f i @ P' \<turnstile> (i', s'', stk'') \<rightarrow>^m (j, s', stk') \<and>
+           n = k + m"
+  using assms by (cases "bcomp b f i = []") (fastforce dest!: exec_n_drop_right)+
+
+lemma bcomp_exec_n [dest]:
+  fixes i j :: int
+  assumes "bcomp b f j \<turnstile> (0, s, stk) \<rightarrow>^n (i, s', stk')"
+          "size (bcomp b f j) \<le> i" "0 \<le> j"
+  shows "i = size(bcomp b f j) + (if f = bval b s then j else 0) \<and>
+         s' = s \<and> stk' = stk"
+using assms proof (induction b arbitrary: f j i n s' stk')
+  case (Bc x)
+  then show ?case  by (simp split: if_split_asm add: exec_n_simps exec1_def)
+next
+  case (Not b)
+  from Not.prems show ?case
+    by (fastforce dest!: Not.IH)
+next
+  case (And b1 b2)
+  then show ?case sorry
+next
+  case (Less x1a x2a)
+  then show ?case by (auto dest!: exec_n_split_full simp: exec_n_simps exec1_def)
+qed
+
+lemma ccomp_exec_n:
+  "ccomp c \<turnstile> (0,s,stk) \<rightarrow>^n (size(ccomp c),t,stk')
+  \<Longrightarrow> (c,s) \<Rightarrow> t \<and> stk'=stk"
+proof (induction c arbitrary: s t stk stk' n)
+  case SKIP
+  then show ?case by auto
+next
+  case (Assign x a)
+  thus ?case sorry
+next
+  case (Seq c1 c2)
+  thus ?case sorry
+next
+  case (If x1 c1 c2)
+  then show ?case sorry
+next
+  case (While x1 c)
+  then show ?case sorry
+qed
+
+(*Theorem 8.19 (Compiler correctness).*)
 theorem ccomp_exec: "ccomp c \<turnstile> (0,s,stk) \<rightarrow>* (size (ccomp c), t, stk) \<Longrightarrow> (c,s) \<Rightarrow> t"
-  sorry
+  using ccomp_exec_n exec_eq_exec_n by auto
 
 end
