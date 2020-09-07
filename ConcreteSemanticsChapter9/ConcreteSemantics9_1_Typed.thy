@@ -67,4 +67,30 @@ While:   "(WHILE b DO c,s) \<rightarrow> (IF b THEN c;; WHILE b DO c ELSE SKIP,s
 
 lemmas small_step_induct = small_step.induct[split_format(complete)]
 
+value "(''x'' ::= V ''y'';; ''y''  ::= Plus (V ''x'') (V ''y''), s(''y'' := Iv 7))"
+
+value "(''x'' ::= V ''y'';; ''y''  ::= Plus (V ''x'') (V ''y''), s(''y'' := Iv 7)) \<rightarrow>
+(SKIP;; ''y'' ::= Plus (V ''x'') (V ''y''), s(''x'':= Iv 7, ''y'' := Iv 7))"
+value "(SKIP;; ''y'' ::= Plus (V ''x'') (V ''y''), s(''x'':= Iv 7)) \<rightarrow>
+(''y'' ::= Plus (V ''x'') (V ''y''), s(''x'' := Iv 7))"
+value "(''y'' ::= Plus (V ''x'') (V ''y''), s(''x'' := Iv 7)) \<rightarrow>
+(SKIP, s(''x'' := Iv 7,''y'' := Iv 14))"
+
+value "(''x'' ::= V ''y'';; ''y''  ::= Plus (V ''x'') (Rc 3), s(''y'' := Iv 7))"
+value "(''x'' ::= V ''y'';; ''y''  ::= Plus (V ''x'') (Rc 3), s(''y'' := Iv 7)) \<rightarrow>
+(SKIP;; ''y'' ::= Plus (V ''x'') (Rc 3), s(''x'':= Iv 7))"
+value "(SKIP;; ''y'' ::= Plus (V ''x'') (Rc 3), s(''x'':= Iv 7)) \<rightarrow>
+(''y'' ::= Plus (V ''x'') (Rc 3), s(''x'' := Iv 7))"
+
+lemma "(SKIP;; ''y'' ::= Plus (V ''x'') (Rc 3), s(''x'':= Iv 7)) \<rightarrow>
+(''y'' ::= Plus (V ''x'') (Rc 3), s(''x'' := Iv 7))"
+  by (simp add: Seq1)
+(*
+after that no further execution
+step is possible because we cannot find an execution for taval on the righthand
+side of the second assignment
+lemma "(''y'' ::= Plus (V ''x'') (Rc 3), s(''x'' := Iv 7, ''y'' := Iv 7)) \<rightarrow>
+(SKIP, s(''x'' := Iv 7, ''y'' := Rc 10))"
+*)
+
 end
