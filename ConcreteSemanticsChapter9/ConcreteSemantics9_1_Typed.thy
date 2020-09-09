@@ -141,4 +141,35 @@ inductive_cases [elim!]:
 
 value "\<Gamma> ''y'' = Ity \<Longrightarrow>  \<Gamma> ''x'' = Ity  \<Longrightarrow> (\<Gamma> \<turnstile> ''x'' ::= V ''y'';; ''y'' ::= Plus (V ''x'') (V''y''))"
 
+subsection "Well-typed Programs Do Not Get Stuck"
+
+fun type :: "val \<Rightarrow> ty" where
+"type (Iv i) = Ity" |
+"type (Rv r) = Rty"
+
+lemma type_eq_Ity[simp]: "type v = Ity \<longleftrightarrow> (\<exists>i. v = Iv i)"
+by (cases v) simp_all
+
+lemma type_eq_Rty[simp]: "type v = Rty \<longleftrightarrow> (\<exists>r. v = Rv r)"
+by (cases v) simp_all
+
+definition styping :: "tyenv \<Rightarrow> state \<Rightarrow> bool" (infix "\<turnstile>" 50)
+  where "\<Gamma> \<turnstile> s  \<longleftrightarrow>  (\<forall>x. type (s x) = \<Gamma> x)"
+
+(* Lemma 9.2 (Preservation for arithmetic expressions). *)
+lemma apreservation:
+  "\<Gamma> \<turnstile> a : \<tau> \<Longrightarrow> taval a s v \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> type v = \<tau>"
+apply(induction arbitrary: v rule: atyping.induct)
+     apply (fastforce simp: styping_def)+
+  done
+
+abbreviation small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
+where "x \<rightarrow>* y == star small_step x y"
+
+theorem type_sound:
+  "(c,s) \<rightarrow>* (c',s') \<Longrightarrow> \<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> c' \<noteq> SKIP
+   \<Longrightarrow> \<exists>cs''. (c',s') \<rightarrow> cs''"
+  apply(induction rule:star_induct)
+  sorry
+
 end
