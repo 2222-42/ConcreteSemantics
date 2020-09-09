@@ -93,4 +93,52 @@ lemma "(''y'' ::= Plus (V ''x'') (Rc 3), s(''x'' := Iv 7, ''y'' := Iv 7)) \<righ
 (SKIP, s(''x'' := Iv 7, ''y'' := Rc 10))"
 *)
 
+subsection "The Type System"
+
+datatype ty = Ity | Rty
+
+type_synonym tyenv = "vname \<Rightarrow> ty"
+
+inductive atyping :: "tyenv \<Rightarrow> aexp \<Rightarrow> ty \<Rightarrow> bool"
+  ("(1_/ \<turnstile>/ (_ :/ _))" [50,0,50] 50)
+where
+Ic_ty: "\<Gamma> \<turnstile> Ic i : Ity" |
+Rc_ty: "\<Gamma> \<turnstile> Rc r : Rty" |
+V_ty: "\<Gamma> \<turnstile> V x : \<Gamma> x" |
+Plus_ty: "\<Gamma> \<turnstile> a1 : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> a2 : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> Plus a1 a2 : \<tau>"
+
+declare atyping.intros [intro!]
+inductive_cases [elim!]:
+  "\<Gamma> \<turnstile> V x : \<tau>" "\<Gamma> \<turnstile> Ic i : \<tau>" "\<Gamma> \<turnstile> Rc r : \<tau>" "\<Gamma> \<turnstile> Plus a1 a2 : \<tau>"
+
+inductive btyping :: "tyenv \<Rightarrow> bexp \<Rightarrow> bool" (infix "\<turnstile>" 50)
+where
+B_ty: "\<Gamma> \<turnstile> Bc v" |
+Not_ty: "\<Gamma> \<turnstile> b \<Longrightarrow> \<Gamma> \<turnstile> Not b" |
+And_ty: "\<Gamma> \<turnstile> b1 \<Longrightarrow> \<Gamma> \<turnstile> b2 \<Longrightarrow> \<Gamma> \<turnstile> And b1 b2" |
+Less_ty: "\<Gamma> \<turnstile> a1 : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> a2 : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> Less a1 a2"
+
+declare btyping.intros [intro!]
+inductive_cases [elim!]: "\<Gamma> \<turnstile> Not b" "\<Gamma> \<turnstile> And b1 b2" "\<Gamma> \<turnstile> Less a1 a2"
+
+text\<open>Warning: the ``:'' notation leads to syntactic ambiguities,
+i.e. multiple parse trees, because ``:'' also stands for set membership.
+In most situations Isabelle's type system will reject all but one parse tree,
+but will still inform you of the potential ambiguity.\<close>
+
+inductive ctyping :: "tyenv \<Rightarrow> com \<Rightarrow> bool" (infix "\<turnstile>" 50) where
+Skip_ty: "\<Gamma> \<turnstile> SKIP" |
+Assign_ty: "\<Gamma> \<turnstile> a : \<Gamma>(x) \<Longrightarrow> \<Gamma> \<turnstile> x ::= a" |
+Seq_ty: "\<Gamma> \<turnstile> c1 \<Longrightarrow> \<Gamma> \<turnstile> c2 \<Longrightarrow> \<Gamma> \<turnstile> c1;;c2" |
+If_ty: "\<Gamma> \<turnstile> b \<Longrightarrow> \<Gamma> \<turnstile> c1 \<Longrightarrow> \<Gamma> \<turnstile> c2 \<Longrightarrow> \<Gamma> \<turnstile> IF b THEN c1 ELSE c2" |
+While_ty: "\<Gamma> \<turnstile> b \<Longrightarrow> \<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile> WHILE b DO c"
+
+declare ctyping.intros [intro!]
+inductive_cases [elim!]:
+  "\<Gamma> \<turnstile> x ::= a"  "\<Gamma> \<turnstile> c1;;c2"
+  "\<Gamma> \<turnstile> IF b THEN c1 ELSE c2"
+  "\<Gamma> \<turnstile> WHILE b DO c"
+
+value "\<Gamma> ''y'' = Ity \<Longrightarrow>  \<Gamma> ''x'' = Ity  \<Longrightarrow> (\<Gamma> \<turnstile> ''x'' ::= V ''y'';; ''y'' ::= Plus (V ''x'') (V''y''))"
+
 end
