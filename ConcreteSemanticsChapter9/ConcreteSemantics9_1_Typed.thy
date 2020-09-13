@@ -216,38 +216,28 @@ next
 qed
 
 (* Theorem 9.5 (Preservation: commands stay well-typed). *)
-theorem progress:
-  "\<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> c \<noteq> SKIP \<Longrightarrow> \<exists>cs'. (c,s) \<rightarrow> cs'"
-proof(induction rule: ctyping.induct)
-case (Skip_ty \<Gamma>)
+theorem "(c,s) \<rightarrow> (c',s') \<Longrightarrow> \<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile>c'"
+proof (induction rule:small_step_induct)
+  case (Assign a s v x)
   then show ?case 
-    by simp
+    by (simp add: Skip_ty)
 next
-case (Assign_ty \<Gamma> a x)
+  case (Seq1 c s)
   then show ?case 
-    using Assign aprogress by blast
+    by blast
 next
-  case (Seq_ty \<Gamma> c1 c2)
+  case (Seq2 c1 s c1' s' c2)
   then show ?case 
-    by (metis Seq1 Seq2 old.prod.exhaust)
+    by blast
 next
-  case (If_ty \<Gamma> b c1 c2)
-  then obtain vb where v: "tbval b s vb" 
-    using bprogress by blast
-  show ?case 
-  proof(cases vb)
-    case True
-    then show ?thesis 
-      using IfTrue v by fastforce
-  next
-    case False
-    then show ?thesis 
-      using IfFalse v by fastforce
-  qed
+  case (IfTrue b s c1 c2)
+  then show ?case by blast
 next
-  case (While_ty \<Gamma> b c)
-  then show ?case 
-    using While by blast
+  case (IfFalse b s c1 c2)
+  then show ?case by blast
+next
+  case (While b c s)
+  then show ?case by blast
 qed
 
 (* Theorem 9.6 (Preservation: states stay well-typed). *)
