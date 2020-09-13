@@ -250,6 +250,35 @@ next
     using While by blast
 qed
 
+(* Theorem 9.6 (Preservation: states stay well-typed). *)
+theorem styping_preservation:
+  "(c,s) \<rightarrow> (c',s') \<Longrightarrow> \<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> \<Gamma> \<turnstile> s'"
+proof(induction rule: small_step_induct)
+case (Assign a s v x)
+  then show ?case 
+    using apreservation styping_def by fastforce
+next
+case (Seq1 c s)
+  then show ?case 
+    by simp
+next
+  case (Seq2 c1 s c1' s' c2)
+  then show ?case 
+    by blast
+next
+case (IfTrue b s c1 c2)
+  then show ?case 
+    by simp
+next
+  case (IfFalse b s c1 c2)
+  then show ?case 
+    by blast
+next
+  case (While b c s)
+  then show ?case 
+    by simp
+qed
+
 abbreviation small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
 where "x \<rightarrow>* y == star small_step x y"
 
