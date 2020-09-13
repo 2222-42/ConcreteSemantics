@@ -163,6 +163,27 @@ apply(induction arbitrary: v rule: atyping.induct)
      apply (fastforce simp: styping_def)+
   done
 
+(* Lemma 9.3 (Progress for arithmetic expressions). *)
+lemma aprogress: "\<Gamma> \<turnstile> a : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> \<exists>v. taval a s v"
+proof(induction rule: atyping.induct)
+case (Ic_ty \<Gamma> i)
+  then show ?case 
+    using taval.intros(1) by auto
+next
+case (Rc_ty \<Gamma> r)
+  then show ?case 
+    using taval.intros(2) by auto
+next
+  case (V_ty \<Gamma> x)
+  then show ?case 
+    using taval.intros(3) by auto
+next
+case (Plus_ty \<Gamma> a1 \<tau> a2)
+  then show ?case 
+    by (metis apreservation taval.intros(4) taval.intros(5) ty.distinct(1) type.elims)
+qed
+
+
 abbreviation small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
 where "x \<rightarrow>* y == star small_step x y"
 
