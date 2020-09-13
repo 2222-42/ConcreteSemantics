@@ -183,6 +183,38 @@ case (Plus_ty \<Gamma> a1 \<tau> a2)
     by (metis apreservation taval.intros(4) taval.intros(5) ty.distinct(1) type.elims)
 qed
 
+(* Lemma 9.4 (Progress for boolean expressions). *)
+lemma bprogress: "\<Gamma> \<turnstile> b \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> \<exists>v. tbval b s v"
+proof(induction rule: btyping.induct)
+case (B_ty \<Gamma> v)
+  then show ?case 
+    using tbval.intros(1) by blast
+next
+case (Not_ty \<Gamma> b)
+  then show ?case 
+    using tbval.intros(2) by blast
+next
+  case (And_ty \<Gamma> b1 b2)
+  then show ?case 
+    using tbval.intros(3) by blast
+next
+  case (Less_ty \<Gamma> a1 \<tau> a2)
+  then obtain v1 v2 where v: "taval a1 s v1" "taval a2 s v2" 
+    using aprogress by blast
+  show ?case 
+  proof (cases v1)
+    case (Iv x1)
+    then show ?thesis 
+      (* by (fastforce intro!: tbval.intros(4) dest!:apreservation) *)
+      by (metis Less_ty.hyps(1) Less_ty.hyps(2) Less_ty.prems \<open>\<And>thesis. (\<And>v1 v2. \<lbrakk>taval a1 s v1; taval a2 s v2\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> apreservation tbval.intros(4) tbval.intros(5) ty.distinct(1) type.elims)
+  next
+    case (Rv x2)
+    then show ?thesis 
+      (* by (fastforce intro!: tbval.intros(5) dest!:apreservation) *)
+      by (metis Less_ty.hyps(1) Less_ty.hyps(2) Less_ty.prems \<open>\<And>thesis. (\<And>v1 v2. \<lbrakk>taval a1 s v1; taval a2 s v2\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> apreservation tbval.intros(4) tbval.intros(5) ty.distinct(1) type.elims)
+  qed
+qed
+
 
 abbreviation small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
 where "x \<rightarrow>* y == star small_step x y"
