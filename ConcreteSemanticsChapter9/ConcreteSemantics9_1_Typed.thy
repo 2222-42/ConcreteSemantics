@@ -328,12 +328,12 @@ where
 "atype \<Gamma> (V x) = Some (\<Gamma> x)" |
 "atype \<Gamma> (Plus a1 a2) = (if (atype \<Gamma> a1) = (atype \<Gamma> a2) then atype \<Gamma> a1 else None)"
 
-fun bok :: "tyenv \<Rightarrow> bexp \<Rightarrow> bool" (infix "\<turnstile>" 50)
+fun bok :: "tyenv \<Rightarrow> bexp \<Rightarrow> bool"
 where
 "bok \<Gamma> (Bc v) = True" |
 "bok \<Gamma> (Not b) = bok \<Gamma> b" |
 "bok \<Gamma> (And b1 b2) = (bok \<Gamma> b1 \<and> bok \<Gamma> b2)" |
-"bok \<Gamma> (Less a1 a2) = (atype \<Gamma> a1 = atype \<Gamma> a2) "
+"bok \<Gamma> (Less a1 a2) = (if atype \<Gamma> a1 = atype \<Gamma> a2 then (\<exists> a. atype \<Gamma> a1 = Some a) else False) "
 
 fun cok :: "tyenv \<Rightarrow> com \<Rightarrow> bool"  where
 "cok \<Gamma> SKIP = True" |
@@ -342,5 +342,19 @@ fun cok :: "tyenv \<Rightarrow> com \<Rightarrow> bool"  where
 "cok \<Gamma> (IF b THEN c1 ELSE c2) = (bok \<Gamma> b \<and> cok \<Gamma> c1 \<and> cok \<Gamma> c2)" |
 "cok \<Gamma> (WHILE b DO c) = (bok \<Gamma> b \<and> cok \<Gamma> c)"
 
+lemma atyping_to_atype: "(\<Gamma> \<turnstile> a: t) = (atype \<Gamma> a = Some t)"
+  apply(induction a)
+     apply(auto)
+  done
+
+lemma btyping_to_bok: "(\<Gamma> \<turnstile> b) = bok \<Gamma> b"
+  apply(induction b)
+  apply(auto simp add: atyping_to_atype)
+  done
+
+lemma "(\<Gamma> \<turnstile> c) = cok \<Gamma> c"
+  apply(induction c)
+      apply(auto simp add: atyping_to_atype btyping_to_bok)
+  done
 
 end
