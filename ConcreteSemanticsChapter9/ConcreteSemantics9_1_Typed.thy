@@ -269,6 +269,41 @@ next
     by simp
 qed
 
+(* Theorem 9.6 (Preservation: states stay well-typed). *)
+theorem progress:
+  "\<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> c \<noteq> SKIP \<Longrightarrow> \<exists>cs'. (c,s) \<rightarrow> cs'"
+proof(induction rule: ctyping.induct)
+case (Skip_ty \<Gamma>)
+  then show ?case 
+    by simp
+next
+case (Assign_ty \<Gamma> a x)
+  then show ?case 
+    using Assign aprogress by blast
+next
+  case (Seq_ty \<Gamma> c1 c2)
+  then show ?case 
+    by (metis Seq1 Seq2 old.prod.exhaust)
+next
+  case (If_ty \<Gamma> b c1 c2)
+  then obtain vb where v: "tbval b s vb" 
+    using bprogress by blast
+  show ?case 
+  proof(cases vb)
+    case True
+    then show ?thesis 
+      using IfTrue v by fastforce
+  next
+    case False
+    then show ?thesis 
+      using IfFalse v by fastforce
+  qed
+next
+  case (While_ty \<Gamma> b c)
+  then show ?case 
+    using While by blast
+qed
+
 abbreviation small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
 where "x \<rightarrow>* y == star small_step x y"
 
