@@ -216,8 +216,11 @@ next
 qed
 
 (* Theorem 9.5 (Preservation: commands stay well-typed). *)
-theorem "(c,s) \<rightarrow> (c',s') \<Longrightarrow> \<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile>c'"
-proof (induction rule:small_step_induct)
+theorem ctyping_preservation:"(c,s) \<rightarrow> (c',s') \<Longrightarrow> \<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile>c'"
+  apply(induction rule: small_step_induct)
+       apply (simp add: Skip_ty)
+  by blast+
+(*proof (induction rule:small_step_induct)
   case (Assign a s v x)
   then show ?case 
     by (simp add: Skip_ty)
@@ -238,7 +241,7 @@ next
 next
   case (While b c s)
   then show ?case by blast
-qed
+qed*)
 
 (* Theorem 9.6 (Preservation: states stay well-typed). *)
 theorem styping_preservation:
@@ -269,7 +272,7 @@ next
     by simp
 qed
 
-(* Theorem 9.6 (Preservation: states stay well-typed). *)
+(* Theorem 9.7 (Progress for commands). *)
 theorem progress:
   "\<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> c \<noteq> SKIP \<Longrightarrow> \<exists>cs'. (c,s) \<rightarrow> cs'"
 proof(induction rule: ctyping.induct)
@@ -307,10 +310,12 @@ qed
 abbreviation small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
 where "x \<rightarrow>* y == star small_step x y"
 
+(* Theorem 9.8 (Type soundness). *)
 theorem type_sound:
   "(c,s) \<rightarrow>* (c',s') \<Longrightarrow> \<Gamma> \<turnstile> c \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> c' \<noteq> SKIP
    \<Longrightarrow> \<exists>cs''. (c',s') \<rightarrow> cs''"
   apply(induction rule:star_induct)
-  sorry
+  using progress apply blast
+  using ctyping_preservation styping_preservation by blast
 
 end
