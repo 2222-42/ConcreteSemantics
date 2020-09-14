@@ -318,4 +318,29 @@ theorem type_sound:
   using progress apply blast
   using ctyping_preservation styping_preservation by blast
 
+subsection "excercises"
+
+subsubsection "Exercise 9.1."
+fun atype :: "tyenv \<Rightarrow> aexp \<Rightarrow> ty option"
+where
+"atype \<Gamma> (Ic i) = Some Ity" |
+"atype \<Gamma> (Rc r) = Some Rty" |
+"atype \<Gamma> (V x) = Some (\<Gamma> x)" |
+"atype \<Gamma> (Plus a1 a2) = (if (atype \<Gamma> a1) = (atype \<Gamma> a2) then atype \<Gamma> a1 else None)"
+
+fun bok :: "tyenv \<Rightarrow> bexp \<Rightarrow> bool" (infix "\<turnstile>" 50)
+where
+"bok \<Gamma> (Bc v) = True" |
+"bok \<Gamma> (Not b) = bok \<Gamma> b" |
+"bok \<Gamma> (And b1 b2) = (bok \<Gamma> b1 \<and> bok \<Gamma> b2)" |
+"bok \<Gamma> (Less a1 a2) = (atype \<Gamma> a1 = atype \<Gamma> a2) "
+
+fun cok :: "tyenv \<Rightarrow> com \<Rightarrow> bool"  where
+"cok \<Gamma> SKIP = True" |
+"cok \<Gamma> (x ::= a) = (atype \<Gamma> a = Some (\<Gamma> x))" |
+"cok \<Gamma> (c1;;c2) = (cok \<Gamma> c1 \<and> cok \<Gamma> c2) " |
+"cok \<Gamma> (IF b THEN c1 ELSE c2) = (bok \<Gamma> b \<and> cok \<Gamma> c1 \<and> cok \<Gamma> c2)" |
+"cok \<Gamma> (WHILE b DO c) = (bok \<Gamma> b \<and> cok \<Gamma> c)"
+
+
 end
