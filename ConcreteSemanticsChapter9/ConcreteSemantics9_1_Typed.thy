@@ -357,4 +357,6 @@ lemma "(\<Gamma> \<turnstile> c) = cok \<Gamma> c"
       apply(auto simp add: atyping_to_atype btyping_to_bok)
   done
 
+(* Exercise 9.2. *)
+
 end
