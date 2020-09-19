@@ -359,4 +359,6 @@ lemma "(\<Gamma> \<turnstile> c) = cok \<Gamma> c"
 
 (* Exercise 9.2. *)
 
+(* Exercise 9.3 *)
+
 end
