@@ -55,13 +55,13 @@ subsection "Small-Step Semantics of Commands"
 inductive
   small_step :: "(com \<times> state) \<Rightarrow> (com \<times> state) \<Rightarrow> bool" (infix "\<rightarrow>" 55)
 where
-Assign:  "taval a s v \<Longrightarrow> (x ::= a, s) \<rightarrow> (SKIP, s(x := v))" |
+Assign:  "eval a s v \<Longrightarrow> (x ::= a, s) \<rightarrow> (SKIP, s(x := v))" |
 
 Seq1:   "(SKIP;;c,s) \<rightarrow> (c,s)" |
 Seq2:   "(c1,s) \<rightarrow> (c1',s') \<Longrightarrow> (c1;;c2,s) \<rightarrow> (c1';;c2,s')" |
 
-IfTrue:  "tbval b s True \<Longrightarrow> (IF b THEN c1 ELSE c2,s) \<rightarrow> (c1,s)" |
-IfFalse: "tbval b s False \<Longrightarrow> (IF b THEN c1 ELSE c2,s) \<rightarrow> (c2,s)" |
+IfTrue:  "eval b s (Bv True) \<Longrightarrow> (IF b THEN c1 ELSE c2,s) \<rightarrow> (c1,s)" |
+IfFalse: "eval b s (Bv False) \<Longrightarrow> (IF b THEN c1 ELSE c2,s) \<rightarrow> (c2,s)" |
 
 While:   "(WHILE b DO c,s) \<rightarrow> (IF b THEN c;; WHILE b DO c ELSE SKIP,s)"
 
@@ -183,7 +183,8 @@ next
   case (If_ty \<Gamma> b c1 c2)
   then obtain bv where bv_def: "eval b s bv" by (metis aprogress)
   then have "type bv = Bty" using apreservation If_ty by blast
-  then show ?case sorry
+  then show ?case sledgehammer
+    by (metis (full_types) IfFalse IfTrue bv_def type_eq_Bty)
 qed
 
 theorem styping_preservation:
