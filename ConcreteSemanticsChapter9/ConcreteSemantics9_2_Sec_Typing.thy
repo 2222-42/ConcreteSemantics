@@ -39,4 +39,49 @@ lemma anti_mono: "\<lbrakk> l \<turnstile> c;  l' \<le> l \<rbrakk> \<Longrighta
   using If apply auto[1]
   by (simp add: While)
 
+(* Lemma 9.13 (Confinement). *)
+lemma confinement: "\<lbrakk> (c,s) \<Rightarrow> t;  l \<turnstile> c \<rbrakk> \<Longrightarrow> s = t (< l)"
+proof(induction rule: big_step_induct)
+case (Skip s)
+  then show ?case 
+    by simp
+next
+  case (Assign x a s)
+  then show ?case by auto
+next
+  case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
+  then show ?case by auto
+next
+  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
+  hence "max (sec b) l \<turnstile> c\<^sub>1" 
+    by blast
+  hence "l \<turnstile> c\<^sub>1" 
+    using anti_mono max.cobounded2 by blast
+  thus ?case 
+    by (simp add: IfTrue.IH)
+(*
+  then show ?case 
+    by (smt anti_mono com.distinct(11) com.distinct(15) com.distinct(19) com.distinct(5) com.inject(3) max.cobounded2 sec_type.cases) *)
+next
+  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  hence "max (sec b) l \<turnstile> c\<^sub>2" 
+    by blast
+  hence "l \<turnstile> c\<^sub>2" 
+    using anti_mono max.cobounded2 by blast
+  thus ?case 
+    by (simp add: IfFalse.IH)
+next
+  case (WhileFalse b s c)
+  then show ?case 
+    by blast
+next
+  case (WhileTrue b s\<^sub>1 c)
+  hence "max (sec b) l \<turnstile> c" 
+    by blast
+  hence "l \<turnstile> c" 
+    by (simp add: anti_mono)
+  then show ?case 
+    by (simp add: WhileTrue.IH(1) WhileTrue.IH(2) WhileTrue.prems)
+qed
+
 end
