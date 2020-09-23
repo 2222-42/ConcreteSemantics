@@ -25,4 +25,18 @@ value "1 \<turnstile> IF Less (V ''x1'') (V ''x'') THEN ''x1'' ::= N 0 ELSE SKIP
 value "2 \<turnstile> IF Less (V ''x1'') (V ''x'') THEN ''x1'' ::= N 0 ELSE SKIP"
 value "3 \<turnstile> IF Less (V ''x1'') (V ''x'') THEN ''x1'' ::= N 0 ELSE SKIP"
 
+inductive_cases [elim!]:
+  "l \<turnstile> x ::= a"  "l \<turnstile> c\<^sub>1;;c\<^sub>2"  "l \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2"  "l \<turnstile> WHILE b DO c"
+
+text\<open>An important property: anti-monotonicity.\<close>
+
+(* Lemma 9.12 (Anti-monotonicity). *)
+lemma anti_mono: "\<lbrakk> l \<turnstile> c;  l' \<le> l \<rbrakk> \<Longrightarrow> l' \<turnstile> c"
+  apply(induction arbitrary: l' rule:sec_type.induct)
+      apply (simp add: sec_type.Skip)
+  using sec_type.Assign apply auto[1]
+    apply (simp add: sec_type.Seq)
+  using If apply auto[1]
+  by (simp add: While)
+
 end
