@@ -84,4 +84,31 @@ next
     by (simp add: WhileTrue.IH(1) WhileTrue.IH(2) WhileTrue.prems)
 qed
 
+(* Theorem 9.14 (Noninterference). *)
+theorem noninterference:
+  "\<lbrakk> (c,s) \<Rightarrow> s'; (c,t) \<Rightarrow> t';  0 \<turnstile> c;  s = t (\<le> l) \<rbrakk>
+   \<Longrightarrow> s' = t' (\<le> l)"
+proof(induction arbitrary: t t' rule: big_step_induct)
+case (Skip s)
+  then show ?case by auto
+next
+  case (Assign x a s)
+  then show ?case sorry
+next
+  case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
+  then show ?case sorry
+next
+  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
+  then show ?case sorry
+next
+  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  then show ?case sorry
+next
+  case (WhileFalse b s c)
+  then show ?case sorry
+next
+  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
+  then show ?case sorry
+qed
+
 end
