@@ -93,7 +93,22 @@ case (Skip s)
   then show ?case by auto
 next
   case (Assign x a s)
-  then show ?case sorry
+  have [simp]:"t' = t(x := aval a t)" using Assign by auto
+  have "sec a \<le> sec x"  using \<open>0 \<turnstile> x ::= a\<close> by auto
+  show ?case 
+  proof auto
+(* 1. sec x \<le> l \<Longrightarrow> aval a s = aval a t
+ 2. \<And>xa. xa \<noteq> x \<Longrightarrow> sec xa \<le> l \<Longrightarrow> s xa = t xa*)
+    assume " sec x \<le> l"
+    have "sec a \<le> l" 
+      using \<open>sec a \<le> sec x\<close> \<open>sec x \<le> l\<close> le_trans by blast
+    thus " aval a s = aval a t" 
+      using Assign.prems(3) aval_eq_if_eq_le by blast
+  next
+    fix xa assume "xa \<noteq> x" "sec xa \<le> l"
+    thus "s xa = t xa" 
+      by (simp add: Assign.prems(3))
+  qed
 next
   case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
   then show ?case sorry
