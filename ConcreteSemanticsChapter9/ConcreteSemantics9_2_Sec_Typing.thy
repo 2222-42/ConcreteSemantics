@@ -111,7 +111,7 @@ next
   qed
 next
   case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
-  then show ?case sorry
+  then show ?case by blast
 next
   case (IfTrue b s c\<^sub>1 t c\<^sub>2)
   then show ?case sorry
