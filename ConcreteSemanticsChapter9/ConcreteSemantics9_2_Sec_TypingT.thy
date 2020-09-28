@@ -68,6 +68,12 @@ next
   then show ?case by auto
 qed
 
-
+(* Lemma 9.21 (Termination). *)
+lemma termi_if_non0: "l \<turnstile> c \<Longrightarrow> l \<noteq> 0 \<Longrightarrow> \<exists> t. (c,s) \<Rightarrow> t"
+  apply(induction arbitrary: s rule: sec_type.induct)
+      apply(simp add: big_step.Skip)
+  apply auto
+   apply blast
+  by (metis IfFalse IfTrue max.commute max.strict_coboundedI1)
 
 end
