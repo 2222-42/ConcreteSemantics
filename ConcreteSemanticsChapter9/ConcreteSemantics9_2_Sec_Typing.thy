@@ -201,6 +201,50 @@ next
       show ?thesis 
         by (smt confinement dual_order.strict_trans not_le_imp_less order.not_eq_order_implies_strict)
     qed
-qed
+  qed
+
+subsubsection "The Standard Typing System"
+
+text\<open>The predicate \<^prop>\<open>l \<turnstile> c\<close> is nicely intuitive and executable. The
+standard formulation, however, is slightly different, replacing the maximum
+computation by an antimonotonicity rule. We introduce the standard system now
+and show the equivalence with our formulation.\<close>
+
+inductive sec_type' :: "nat \<Rightarrow> com \<Rightarrow> bool" ("(_/ \<turnstile>'' _)" [0,0] 50) where
+Skip':
+  "l \<turnstile>' SKIP" |
+Assign':
+  "\<lbrakk> sec x \<ge> sec a; sec x \<ge> l \<rbrakk> \<Longrightarrow> l \<turnstile>' x ::= a" |
+Seq':
+  "\<lbrakk> l \<turnstile>' c\<^sub>1;  l \<turnstile>' c\<^sub>2 \<rbrakk> \<Longrightarrow> l \<turnstile>' c\<^sub>1;;c\<^sub>2" |
+If':
+  "\<lbrakk> sec b \<le> l;  l \<turnstile>' c\<^sub>1;  l \<turnstile>' c\<^sub>2 \<rbrakk> \<Longrightarrow> l \<turnstile>' IF b THEN c\<^sub>1 ELSE c\<^sub>2" |
+While':
+  "\<lbrakk> sec b \<le> l;  l \<turnstile>' c \<rbrakk> \<Longrightarrow> l \<turnstile>' WHILE b DO c" |
+anti_mono':
+  "\<lbrakk> l \<turnstile>' c;  l' \<le> l \<rbrakk> \<Longrightarrow> l' \<turnstile>' c"
+
+
+(* Lemma 9.15 *)
+lemma sec_type_sec_type': "l \<turnstile> c \<Longrightarrow> l \<turnstile>' c"
+  apply(induction rule: sec_type.induct)
+      apply (simp add: Skip')
+     apply(simp add: Assign')
+    apply(simp add: Seq')
+(*   apply (smt max.cobounded1 max.cobounded2 sec_type'.simps)*)
+   apply (metis max.commute max.absorb_iff2 nat_le_linear If' anti_mono')
+  by (metis While' anti_mono' le_cases max.absorb_iff2 max.order_iff)
+
+
+(* Lemma 9.16 *)
+lemma sec_type'_sec_type: "l \<turnstile>' c \<Longrightarrow> l \<turnstile> c"
+  apply(induction rule: sec_type'.induct)
+       apply(simp add: Skip)
+  apply(simp add: Assign)
+     apply(simp add: Seq)
+    apply (simp add: If max.absorb2)
+   apply (simp add: While max_def)
+  using anti_mono by blast
+
 
 end
