@@ -135,9 +135,28 @@ next
     qed
 next
   case (IfFalse b s c\<^sub>2 t c\<^sub>1)
-  then show ?case sorry
+  have "sec b \<turnstile> c\<^sub>1" "sec b \<turnstile> c\<^sub>2" using \<open>0 \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2\<close> by auto
+  show ?case 
+    proof cases
+      assume "sec b \<le> l"
+      then have "s = t (\<le> sec b)" 
+        using IfFalse.prems(3) le_trans by blast
+      hence "\<not>bval b t" 
+        using IfFalse.hyps(1) bval_eq_if_eq_le by auto
+      with IfFalse.IH IfFalse.prems(1,3) \<open>sec b \<turnstile> c\<^sub>2\<close> anti_mono
+      show ?thesis by blast
+    next
+      assume "\<not> sec b \<le> l"
+      have "sec b \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2" 
+        by (simp add: If \<open>sec b \<turnstile> c\<^sub>1\<close> \<open>sec b \<turnstile> c\<^sub>2\<close>)
+      then have "t = t' (\<le> l)" 
+        using IfFalse.prems(1) \<open>\<not> sec b \<le> l\<close> confinement by auto
+      then show ?thesis 
+        using IfFalse.hyps(2) IfFalse.prems(3) \<open>\<not> sec b \<le> l\<close> \<open>sec b \<turnstile> c\<^sub>2\<close> confinement by fastforce
+    qed
 next
   case (WhileFalse b s c)
+  have "sec b \<turnstile> c" sledgehammer
   then show ?case sorry
 next
   case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
