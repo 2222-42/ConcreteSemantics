@@ -24,6 +24,18 @@ code_pred (expected_modes: i => i => bool) sec_type .
 inductive_cases [elim!]:
   "l \<turnstile> x ::= a"  "l \<turnstile> c\<^sub>1;;c\<^sub>2"  "l \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2"  "l \<turnstile> WHILE b DO c"
 
+(* Lemma 9.19 (Anti-monotonicity). *)
+lemma anti_mono: "l \<turnstile> c \<Longrightarrow> l' \<le> l \<Longrightarrow> l' \<turnstile> c"
+  apply(induction arbitrary: l' rule:sec_type.induct)
+      apply(simp add: Skip)
+     apply(simp add: Assign)
+    apply(simp add: Seq)
+   apply (simp add: If)
+  by(simp add: While)
+  
+
+
+
 
 
 end
