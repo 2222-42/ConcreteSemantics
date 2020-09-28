@@ -114,7 +114,25 @@ next
   then show ?case by blast
 next
   case (IfTrue b s c\<^sub>1 t c\<^sub>2)
-  then show ?case sorry
+  have "sec b \<turnstile> c\<^sub>1" "sec b \<turnstile> c\<^sub>2" using \<open>0 \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2\<close> by auto
+  show ?case 
+    proof cases
+      assume "sec b \<le> l"
+      then have "s = t (\<le> sec b)" 
+        using IfTrue.prems(3) \<open>sec b \<le> l\<close> by auto
+      hence "bval b t" 
+        using IfTrue.hyps(1) bval_eq_if_eq_le by blast
+      with IfTrue.IH IfTrue.prems(1,3) \<open>sec b \<turnstile> c\<^sub>1\<close> anti_mono
+      show ?thesis by (auto)
+    next
+      assume "\<not> sec b \<le> l"
+      have "sec b \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2" 
+        by (simp add: If \<open>sec b \<turnstile> c\<^sub>1\<close> \<open>sec b \<turnstile> c\<^sub>2\<close>)
+      then have "t = t' (\<le> l)" 
+        using IfTrue.prems(1) \<open>\<not> sec b \<le> l\<close> confinement by auto
+      then show ?thesis 
+        using IfTrue.hyps(2) IfTrue.prems(3) \<open>\<not> sec b \<le> l\<close> \<open>sec b \<turnstile> c\<^sub>1\<close> confinement by fastforce
+    qed
 next
   case (IfFalse b s c\<^sub>2 t c\<^sub>1)
   then show ?case sorry
