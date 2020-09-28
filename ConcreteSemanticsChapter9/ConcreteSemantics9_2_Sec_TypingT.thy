@@ -34,7 +34,39 @@ lemma anti_mono: "l \<turnstile> c \<Longrightarrow> l' \<le> l \<Longrightarrow
   by(simp add: While)
   
 
-
+(* Lemma 9.20 (Confinement). *)
+lemma confinement: "(c,s) \<Rightarrow> t \<Longrightarrow> l \<turnstile> c \<Longrightarrow> s = t (< l)"
+proof(induction rule: big_step_induct)
+  case (Skip s)
+  then show ?case by simp
+next
+  case (Assign x a s)
+  then show ?case by auto
+next
+  case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
+  then show ?case by auto
+next
+  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
+  then have "max (sec b) l \<turnstile> c\<^sub>1" by blast
+  then have "l \<turnstile> c\<^sub>1" 
+    using anti_mono max.cobounded2 by blast
+  then show ?case 
+    by (simp add: IfTrue.IH)
+next
+  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  then have "max (sec b) l \<turnstile> c\<^sub>2" by blast
+  then have "l \<turnstile> c\<^sub>2" 
+    using anti_mono max.cobounded2 by blast
+  then show ?case 
+    by (simp add: IfFalse.IH)
+(*    by (smt anti_mono com.distinct(11) com.distinct(15) com.distinct(19) com.distinct(5) com.inject(3) max.orderI max_def sec_type.simps)*)
+next
+  case (WhileFalse b s c)
+  then show ?case by auto
+next
+  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
+  then show ?case by auto
+qed
 
 
 
