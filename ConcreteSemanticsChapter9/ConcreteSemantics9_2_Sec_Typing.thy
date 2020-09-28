@@ -156,11 +156,51 @@ next
     qed
 next
   case (WhileFalse b s c)
-  have "sec b \<turnstile> c" sledgehammer
-  then show ?case sorry
+  have "sec b \<turnstile> c" 
+    using WhileFalse.prems(2) com.distinct(17) com.distinct(19) com.distinct(7) by force
+  show ?case 
+  proof cases
+    assume "sec b \<le> l"
+      then have "s = t (\<le> sec b)" 
+        using WhileFalse.prems(3) dual_order.trans by blast
+      hence "\<not>bval b t" 
+        using WhileFalse.hyps bval_eq_if_eq_le by blast
+    then show ?thesis 
+      using WhileFalse.prems(1) WhileFalse.prems(3) by blast
+  next
+    assume "\<not> sec b \<le> l"
+      have "sec b \<turnstile> WHILE b DO c" 
+        by (simp add: While \<open>sec b \<turnstile> c\<close>)
+      then have "t = t' (\<le> l)" 
+        using WhileFalse.prems(1) \<open>\<not> sec b \<le> l\<close> confinement by auto
+    then show ?thesis 
+      by (simp add: WhileFalse.prems(3))
+  qed
 next
-  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
-  then show ?case sorry
+  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3 t1 t3)
+  have "sec b \<turnstile> c" 
+    using WhileTrue.prems(2) by force
+  show ?case 
+    proof cases
+      assume "sec b \<le> l"
+      then have "s\<^sub>1 = t1 (\<le> sec b)" 
+        using WhileTrue.prems(3) \<open>sec b \<le> l\<close> by auto
+      hence "bval b t1" 
+        using WhileTrue.hyps(1) bval_eq_if_eq_le by blast
+      then obtain t2 where "(c, t1) \<Rightarrow> t2" "(WHILE b DO c , t2 ) \<Rightarrow> t3" 
+        using WhileTrue.prems(1) by auto
+      with WhileTrue.IH(1,2) WhileTrue.prems(2, 3) anti_mono
+      show ?thesis by auto
+    next
+      assume "\<not> sec b \<le> l"
+      have "sec b \<turnstile> WHILE b DO c" 
+        by (simp add: While \<open>sec b \<turnstile> c\<close>)
+      then have "t1 = t3 (\<le> l)" 
+        using WhileTrue.prems(1) \<open>\<not> sec b \<le> l\<close> confinement max_absorb1 by auto
+      with WhileTrue.hyps(2,3) WhileTrue.prems(3) \<open>\<not> sec b \<le> l\<close> \<open>sec b \<turnstile> WHILE b DO c\<close> \<open>sec b \<turnstile> c\<close> 
+      show ?thesis 
+        by (smt confinement dual_order.strict_trans not_le_imp_less order.not_eq_order_implies_strict)
+    qed
 qed
 
 end
