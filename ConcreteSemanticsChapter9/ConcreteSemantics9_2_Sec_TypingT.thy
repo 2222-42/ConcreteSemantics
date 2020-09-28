@@ -76,4 +76,34 @@ lemma termi_if_non0: "l \<turnstile> c \<Longrightarrow> l \<noteq> 0 \<Longrigh
    apply blast
   by (metis IfFalse IfTrue max.commute max.strict_coboundedI1)
 
+(* Theorem 9.22 (Noninterference). *)
+theorem noninterference: "(c,s) \<Rightarrow> s' \<Longrightarrow> 0 \<turnstile> c \<Longrightarrow>  s = t (\<le> l)
+  \<Longrightarrow> \<exists> t'. (c,t) \<Rightarrow> t' \<and> s' = t' (\<le> l)"
+proof(induction arbitrary: t rule: big_step_induct)
+case (Skip s)
+  then show ?case by auto
+next
+  case (Assign x a s)
+  have "sec a \<le> sec x" using \<open>0 \<turnstile> x ::= a\<close> by auto
+  have "(x ::= a, t) \<Rightarrow> t(x := aval a t)" using Assign by auto
+  moreover have "s(x := aval a s) = t(x := aval a t)" sorry
+  then show ?case 
+    by auto
+next
+  case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
+  then show ?case by blast
+next
+  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
+  then show ?case sorry
+next
+  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  then show ?case sorry
+next
+  case (WhileFalse b s c)
+  then show ?case sorry
+next
+  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
+  then show ?case sorry
+qed
+
 end
