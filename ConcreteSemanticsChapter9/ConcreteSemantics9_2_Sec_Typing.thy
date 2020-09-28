@@ -247,4 +247,40 @@ lemma sec_type'_sec_type: "l \<turnstile>' c \<Longrightarrow> l \<turnstile> c"
   using anti_mono by blast
 
 
+subsubsection "A Bottom-Up Typing System"
+
+inductive sec_type2 :: "com \<Rightarrow> level \<Rightarrow> bool" ("(\<turnstile> _ : _)" [0,0] 50) where
+Skip2:
+  "\<turnstile> SKIP : l" |
+Assign2:
+  "sec x \<ge> sec a \<Longrightarrow> \<turnstile> x ::= a : sec x" |
+Seq2:
+  "\<lbrakk> \<turnstile> c\<^sub>1 : l\<^sub>1;  \<turnstile> c\<^sub>2 : l\<^sub>2 \<rbrakk> \<Longrightarrow> \<turnstile> c\<^sub>1;;c\<^sub>2 : min l\<^sub>1 l\<^sub>2 " |
+If2:
+  "\<lbrakk> sec b \<le> min l\<^sub>1 l\<^sub>2;  \<turnstile> c\<^sub>1 : l\<^sub>1;  \<turnstile> c\<^sub>2 : l\<^sub>2 \<rbrakk>
+  \<Longrightarrow> \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2 : min l\<^sub>1 l\<^sub>2" |
+While2:
+  "\<lbrakk> sec b \<le> l;  \<turnstile> c : l \<rbrakk> \<Longrightarrow> \<turnstile> WHILE b DO c : l"
+
+
+(* Lemma 9.17 *)
+lemma sec_type2_sec_type': "\<turnstile> c : l \<Longrightarrow> l \<turnstile>' c"
+  apply(induction rule: sec_type2.induct)
+      apply(simp add: Skip')
+     apply(simp add: Assign')
+    apply (meson Seq' anti_mono' min.cobounded1 min.cobounded2)
+  apply (metis If' anti_mono' le_cases min_def)
+  by (simp add: While')
+
+(* Lemma 9.18 *)
+lemma sec_type'_sec_type2: "l \<turnstile>' c \<Longrightarrow> \<exists> l' \<ge> l. \<turnstile> c : l'"
+  apply(induction rule: sec_type'.induct)
+       apply(simp add: Skip2)
+       apply(auto)
+  using Assign2 apply blast
+  using Seq2 min.bounded_iff apply blast
+    apply (metis (no_types, hide_lams) If2 le_trans min.bounded_iff)
+  using While2 le_trans apply blast
+  using le_trans by blast
+
 end
