@@ -172,7 +172,16 @@ next
   qed
 next
   case (WhileFalse b s c)
-  then show ?case sorry
+(*  \<not> bval b s
+    0 \<turnstile> WHILE b DO c
+    s = t (\<le> l)*)
+  then have [simp]: "sec b = 0" by auto
+  then have "s = t (\<le> l)" 
+    by (simp add: WhileFalse.prems(2))
+  then have "\<not> bval b t" 
+    using WhileFalse.hyps bval_eq_if_eq_le by auto
+  then show ?case 
+    using WhileFalse.prems(2) by blast
 next
   case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
   then show ?case sorry
