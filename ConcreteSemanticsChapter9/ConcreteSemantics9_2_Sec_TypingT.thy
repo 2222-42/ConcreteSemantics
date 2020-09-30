@@ -217,4 +217,49 @@ goal (1 subgoal):
     using \<open>s\<^sub>3 = t' (\<le> l)\<close> t' t'' by blast
 qed
 
+
+subsubsection "The Standard System"
+
+text\<open>The predicate \<^prop>\<open>l \<turnstile> c\<close> is nicely intuitive and executable. The
+standard formulation, however, is slightly different, replacing the maximum
+computation by an antimonotonicity rule. We introduce the standard system now
+and show the equivalence with our formulation.\<close>
+
+inductive sec_type' :: "nat \<Rightarrow> com \<Rightarrow> bool" ("(_/ \<turnstile>'' _)" [0,0] 50) where
+Skip':
+  "l \<turnstile>' SKIP"  |
+Assign':
+  "\<lbrakk> sec x \<ge> sec a;  sec x \<ge> l \<rbrakk> \<Longrightarrow> l \<turnstile>' x ::= a"  |
+Seq':
+  "l \<turnstile>' c\<^sub>1 \<Longrightarrow> l \<turnstile>' c\<^sub>2 \<Longrightarrow> l \<turnstile>' c\<^sub>1;;c\<^sub>2"  |
+If':
+  "\<lbrakk> sec b \<le> l;  l \<turnstile>' c\<^sub>1;  l \<turnstile>' c\<^sub>2 \<rbrakk> \<Longrightarrow> l \<turnstile>' IF b THEN c\<^sub>1 ELSE c\<^sub>2"  |
+While':
+  "\<lbrakk> sec b = 0;  0 \<turnstile>' c \<rbrakk> \<Longrightarrow> 0 \<turnstile>' WHILE b DO c"  |
+anti_mono':
+  "\<lbrakk> l \<turnstile>' c;  l' \<le> l \<rbrakk> \<Longrightarrow> l' \<turnstile>' c"
+
+(* Lemma 9.23 (Equivalence to standard formulation). *)
+lemma sec_type_sec_type': 
+  "l \<turnstile> c \<Longrightarrow> l \<turnstile>' c"
+  apply (induction rule: sec_type.induct)
+  apply (simp add: Skip')
+     apply (simp add: Assign')
+    apply (simp add: Seq')
+   apply (meson If' anti_mono' max.cobounded1 max.cobounded2)
+  by (simp add: While')
+
+lemma sec_type'_sec_type:
+  "l \<turnstile>' c \<Longrightarrow> l \<turnstile> c"
+  apply (induction rule: sec_type'.induct)
+  apply (simp add: Skip)
+     apply (simp add: Assign)
+    apply (simp add: Seq)
+  apply (simp add: If max_def)
+   apply (simp add: While)
+  using anti_mono by blast
+
+corollary sec_type_eq: "l \<turnstile> c \<longleftrightarrow> l \<turnstile>' c"
+  using sec_type'_sec_type sec_type_sec_type' by blast
+
 end
