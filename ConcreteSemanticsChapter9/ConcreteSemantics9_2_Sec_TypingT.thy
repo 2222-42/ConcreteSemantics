@@ -86,15 +86,72 @@ next
   case (Assign x a s)
   have "sec a \<le> sec x" using \<open>0 \<turnstile> x ::= a\<close> by auto
   have "(x ::= a, t) \<Rightarrow> t(x := aval a t)" using Assign by auto
-  moreover have "s(x := aval a s) = t(x := aval a t)" sorry
+  moreover 
+  have "s(x := aval a s) = t(x := aval a t) (\<le> l)" 
+    using Assign.prems(2) \<open>sec a \<le> sec x\<close> aval_eq_if_eq_le by auto
   then show ?case 
     by auto
 next
   case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
   then show ?case by blast
 next
-  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
-  then show ?case sorry
+  case (IfTrue b s c\<^sub>1 s' c\<^sub>2)
+(*    bval b s
+    (c\<^sub>1, s) \<Rightarrow> s'
+    0 \<turnstile> c\<^sub>1 \<Longrightarrow> s = ?t (\<le> l) \<Longrightarrow> \<exists>t'. (c\<^sub>1, ?t) \<Rightarrow> t' \<and> s' = t' (\<le> l)
+    0 \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2
+    s = t (\<le> l)*)
+  have "sec b \<turnstile> c\<^sub>1" "sec b \<turnstile> c\<^sub>2" using \<open>0 \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2\<close> by auto
+  obtain t' where t': "(c\<^sub>1, t) \<Rightarrow> t'" "s' = t' (\<le> l)"
+    using IfTrue.IH[OF anti_mono[OF \<open>sec b \<turnstile> c\<^sub>1\<close>] \<open>s = t (\<le> l)\<close>] by blast
+  show ?case 
+  proof cases
+    assume "sec b \<le> l"
+(*\<exists>t'. (IF b THEN c\<^sub>1 ELSE c\<^sub>2, t) \<Rightarrow> t' \<and> ta__ = t' (\<le> l)*)
+    then have "s = t (\<le> sec b)" 
+      using IfTrue.prems(2) dual_order.trans by blast
+    hence "bval b t" 
+      using IfTrue.hyps(1) bval_eq_if_eq_le by auto
+    then show ?thesis 
+      using t'(1) t'(2) by blast
+  next
+    assume "\<not> sec b \<le> l"
+(*\<exists>t'. (IF b THEN c\<^sub>1 ELSE c\<^sub>2, t) \<Rightarrow> t' \<and> ta__ = t' (\<le> l)*)
+    then have 0: "sec b \<noteq> 0" 
+      using \<open>\<not> sec b \<le> l\<close> by auto
+    have 1: "sec b \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2" 
+      by (simp add: If \<open>sec b \<turnstile> c\<^sub>1\<close> \<open>sec b \<turnstile> c\<^sub>2\<close>)
+    from confinement[OF big_step.IfTrue[OF IfTrue(1,2)] 1] \<open>\<not> sec b \<le> l\<close>
+    have "s = s'(\<le> l)" by auto
+    (* we first have to show that the second execution terminates,*)
+    moreover obtain t' where t' : "(IF b THEN c\<^sub>1 ELSE c\<^sub>2, t) \<Rightarrow> t'" 
+      by (meson "0" "1" termi_if_non0)
+    moreover have "t = t' (\<le> l)" 
+      using "1" \<open>\<not> sec b \<le> l\<close> confinement t' by auto
+(*      using "1" \<open>\<not> sec b \<le> l\<close> confinement by auto*)
+    ultimately show ?thesis 
+      using IfTrue.prems(2) by auto
+  qed
+(*
+  show ?case 
+    proof cases
+      assume "sec b \<le> l"
+      then have "s = t (\<le> sec b)" 
+        using IfTrue.prems(3) \<open>sec b \<le> l\<close> by auto
+      hence "bval b t" 
+        using IfTrue.hyps(1) bval_eq_if_eq_le by blast
+      with IfTrue.IH IfTrue.prems(1,3) \<open>sec b \<turnstile> c\<^sub>1\<close> anti_mono
+      show ?thesis by (auto)
+    next
+      assume "\<not> sec b \<le> l"
+      have "sec b \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2" 
+        by (simp add: If \<open>sec b \<turnstile> c\<^sub>1\<close> \<open>sec b \<turnstile> c\<^sub>2\<close>)
+      then have "t = t' (\<le> l)" 
+        using IfTrue.prems(1) \<open>\<not> sec b \<le> l\<close> confinement by auto
+      then show ?thesis 
+        using IfTrue.hyps(2) IfTrue.prems(3) \<open>\<not> sec b \<le> l\<close> \<open>sec b \<turnstile> c\<^sub>1\<close> confinement by fastforce
+    qed
+*)
 next
   case (IfFalse b s c\<^sub>2 t c\<^sub>1)
   then show ?case sorry
