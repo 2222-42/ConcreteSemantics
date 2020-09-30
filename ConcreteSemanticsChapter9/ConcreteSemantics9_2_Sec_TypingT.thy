@@ -184,7 +184,37 @@ next
     using WhileFalse.prems(2) by blast
 next
   case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
-  then show ?case sorry
+(*
+this:
+    bval b s\<^sub>1
+    (c, s\<^sub>1) \<Rightarrow> s\<^sub>2
+    (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3
+    0 \<turnstile> c \<Longrightarrow> s\<^sub>1 = ?t (\<le> l) \<Longrightarrow> \<exists>t'. (c, ?t) \<Rightarrow> t' \<and> s\<^sub>2 = t' (\<le> l)
+    0 \<turnstile> WHILE b DO c \<Longrightarrow> s\<^sub>2 = ?t (\<le> l) \<Longrightarrow> \<exists>t'. (WHILE b DO c, ?t) \<Rightarrow> t' \<and> s\<^sub>3 = t' (\<le> l)
+    0 \<turnstile> WHILE b DO c
+    s\<^sub>1 = t (\<le> l)
+
+goal (1 subgoal):
+ 1. \<And>b s\<^sub>1 c s\<^sub>2 s\<^sub>3 t.
+       bval b s\<^sub>1 \<Longrightarrow>
+       (c, s\<^sub>1) \<Rightarrow> s\<^sub>2 \<Longrightarrow>
+       (\<And>t. 0 \<turnstile> c \<Longrightarrow> s\<^sub>1 = t (\<le> l) \<Longrightarrow> \<exists>t'. (c, t) \<Rightarrow> t' \<and> s\<^sub>2 = t' (\<le> l)) \<Longrightarrow>
+       (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<Longrightarrow>
+       (\<And>t. 0 \<turnstile> WHILE b DO c \<Longrightarrow> s\<^sub>2 = t (\<le> l) \<Longrightarrow> \<exists>t'. (WHILE b DO c, t) \<Rightarrow> t' \<and> s\<^sub>3 = t' (\<le> l)) \<Longrightarrow>
+       0 \<turnstile> WHILE b DO c \<Longrightarrow> s\<^sub>1 = t (\<le> l) \<Longrightarrow> \<exists>t'. (WHILE b DO c, t) \<Rightarrow> t' \<and> s\<^sub>3 = t' (\<le> l)
+*)
+  let ?w = "WHILE b DO c"
+  from \<open>0 \<turnstile> ?w\<close> have [simp]: "sec b = 0" by auto
+  have "0 \<turnstile> c" 
+    using WhileTrue.prems(1) by blast
+  obtain t'' where t'': "(c, t) \<Rightarrow> t''"  and "s\<^sub>2 = t'' (\<le> l)"
+    using WhileTrue.IH(1) WhileTrue.prems(2) \<open>0 \<turnstile> c\<close> by blast
+  obtain t' where t' : "(?w, t'') \<Rightarrow> t'" and "s\<^sub>3 = t'(\<le> l)" 
+    by (meson WhileTrue.IH(2) WhileTrue.prems(1) \<open>s\<^sub>2 = t'' (\<le> l)\<close>)
+  have "bval b t" 
+    using WhileTrue.hyps(1) WhileTrue.prems(2) bval_eq_if_eq_le by auto
+  then show ?case 
+    using \<open>s\<^sub>3 = t' (\<le> l)\<close> t' t'' by blast
 qed
 
 end
