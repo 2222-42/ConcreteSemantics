@@ -283,4 +283,30 @@ lemma sec_type'_sec_type2: "l \<turnstile>' c \<Longrightarrow> \<exists> l' \<g
   using While2 le_trans apply blast
   using le_trans by blast
 
+(* Exercise 9.5 *)
+fun ok :: "level \<Rightarrow> com \<Rightarrow> bool"  where
+"ok l SKIP = True" |
+"ok l (x ::= a) = ((sec x \<ge> sec a) \<and> (sec x \<ge> l))" |
+"ok l (c1;;c2) = ((ok l c1) \<and> (ok l c2))" |
+"ok l (IF b THEN c\<^sub>1 ELSE c\<^sub>2) = ((ok (max (sec b) l) c\<^sub>1) \<and> (ok ( max (sec b) l) c\<^sub>2))" |
+"ok l (WHILE b DO c) = ok (max (sec b) l) c"
+
+lemma ok_sec_type: "ok l c \<Longrightarrow> l \<turnstile> c"
+  apply(induction rule: ok.induct)
+  using sec_type.Skip apply blast
+  using sec_type.Assign apply auto
+    apply (simp add: sec_type.Seq)
+   apply (simp add: If)
+  using While by blast
+
+lemma sec_type_ok: "l \<turnstile> c \<Longrightarrow> ok l c"
+  apply(induction rule: sec_type.induct)
+      apply(simp add: Skip)
+     apply(simp add: Assign)
+    apply simp
+   apply simp
+  apply(simp)
+  done
+
+
 end
