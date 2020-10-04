@@ -312,6 +312,16 @@ theorem "(l \<turnstile> c) = ok l c"
   using ok_sec_type sec_type_ok by blast
 
 (* 
+Skip':
+  "l \<turnstile>' SKIP" |
+Assign':
+  "\<lbrakk> sec x \<ge> sec a; sec x \<ge> l \<rbrakk> \<Longrightarrow> l \<turnstile>' x ::= a" |
+Seq':
+  "\<lbrakk> l \<turnstile>' c\<^sub>1;  l \<turnstile>' c\<^sub>2 \<rbrakk> \<Longrightarrow> l \<turnstile>' c\<^sub>1;;c\<^sub>2" |
+If':
+  "\<lbrakk> sec b \<le> l;  l \<turnstile>' c\<^sub>1;  l \<turnstile>' c\<^sub>2 \<rbrakk> \<Longrightarrow> l \<turnstile>' IF b THEN c\<^sub>1 ELSE c\<^sub>2" |
+While':
+  "\<lbrakk> sec b \<le> l;  l \<turnstile>' c \<rbrakk> \<Longrightarrow> l \<turnstile>' WHILE b DO c" |
 anti_mono':
   "\<lbrakk> l \<turnstile>' c;  l' \<le> l \<rbrakk> \<Longrightarrow> l' \<turnstile>' c"
 
@@ -323,6 +333,49 @@ fun ok' :: "level \<Rightarrow> com \<Rightarrow> bool"  where
 "ok' l (WHILE b DO c) = (sec b \<le> l \<and> ok l c)" |
 "ok' l' c = (\<exists>l. (ok' l c \<and> l' \<le> l))" <- It is difficult to reformulate this case.
 *)
+
+(* Exercise 9.6*)
+
+inductive sec_type2' :: "com \<Rightarrow> level \<Rightarrow> bool" ("(\<turnstile>'' _ : _)" [0,0] 50) where
+Skip2':
+  "\<turnstile>' SKIP : l" |
+Assign2':
+  "sec x \<ge> sec a \<Longrightarrow> \<turnstile>' x ::= a : sec x" |
+Seq2':
+  "\<lbrakk> \<turnstile>' c\<^sub>1 : l;  \<turnstile>' c\<^sub>2 : l \<rbrakk> \<Longrightarrow> \<turnstile>' c\<^sub>1;;c\<^sub>2 : l " |
+If2':
+  "\<lbrakk> sec b \<le> l;  \<turnstile>' c\<^sub>1 : l;  \<turnstile>' c\<^sub>2 : l \<rbrakk>
+  \<Longrightarrow> \<turnstile>' IF b THEN c\<^sub>1 ELSE c\<^sub>2 : l" |
+While2':
+  "\<lbrakk> sec b \<le> l;  \<turnstile>' c : l \<rbrakk> \<Longrightarrow> \<turnstile>' WHILE b DO c : l"|
+Subsumption2':
+  "\<lbrakk>\<turnstile>' c:l ; l' \<le> l\<rbrakk> \<Longrightarrow> \<turnstile>' c : l'"
+
+lemma "\<turnstile>' c : l \<Longrightarrow> \<exists> l' \<ge> l. \<turnstile> c : l'"
+    apply(induction rule: sec_type2'.induct)
+  apply (metis Skip2 less_or_eq_imp_le)
+      apply (metis Assign2 less_or_eq_imp_le)
+  
+  apply (metis (full_types) Seq' anti_mono' sec_type'_sec_type2 sec_type2_sec_type')
+
+  apply (metis If' anti_mono' sec_type'_sec_type2 sec_type2_sec_type')
+  apply (metis While2 le_trans)
+  apply (metis le_trans)
+  done
+(*    apply (meson Seq2' Subsumption min.cobounded1 min.cobounded2)*)
+
+lemma "\<turnstile> c : l \<Longrightarrow> \<turnstile>' c : l" 
+proof (induct rule: sec_type2.induct)
+  case Seq2
+  thus ?case
+    by (meson Seq2' Subsumption2' min.cobounded1 min.cobounded2)
+
+next
+  case If2
+  thus ?case
+    by (metis If2' Subsumption2' min.bounded_iff nat_le_linear)
+qed (auto intro: sec_type2'.intros)
+
 
 
 end
