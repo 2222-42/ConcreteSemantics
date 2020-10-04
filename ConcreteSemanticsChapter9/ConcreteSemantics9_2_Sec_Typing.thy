@@ -308,5 +308,21 @@ lemma sec_type_ok: "l \<turnstile> c \<Longrightarrow> ok l c"
   apply(simp)
   done
 
+theorem "(l \<turnstile> c) = ok l c"
+  using ok_sec_type sec_type_ok by blast
+
+(* 
+anti_mono':
+  "\<lbrakk> l \<turnstile>' c;  l' \<le> l \<rbrakk> \<Longrightarrow> l' \<turnstile>' c"
+
+fun ok' :: "level \<Rightarrow> com \<Rightarrow> bool"  where
+"ok' l SKIP = True" |
+"ok' l (x ::= a) = ((sec x \<ge> sec a) \<and> (sec x \<ge> l))" |
+"ok' l (c1;;c2) = ((ok' l c1) \<and> (ok' l c2))" |
+"ok' l (IF b THEN c\<^sub>1 ELSE c\<^sub>2) = ((sec b \<le> l)\<and> (ok l c\<^sub>1) \<and> (ok l c\<^sub>2))" |
+"ok' l (WHILE b DO c) = (sec b \<le> l \<and> ok l c)" |
+"ok' l' c = (\<exists>l. (ok' l c \<and> l' \<le> l))" <- It is difficult to reformulate this case.
+*)
+
 
 end
