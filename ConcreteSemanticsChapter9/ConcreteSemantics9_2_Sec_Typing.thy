@@ -508,4 +508,21 @@ next
     qed
   qed
 *)
+
+theorem erase_correct:
+  "\<lbrakk> (c,s) \<Rightarrow> s'; (erase l c,t) \<Rightarrow> t';  0 \<turnstile> c;  s = t (< l) \<rbrakk>
+   \<Longrightarrow> s' = t' (< l)"
+  sorry
+
+text \<open>
+In the theorem above we assumed that both @{term"(c,s)"}
+and @{term "(erase l c,t)"} terminate. How about the following two properties:
+\<close>
+lemma "\<lbrakk> (c,s) \<Rightarrow> s';  0 \<turnstile> c;  s = t (< l) \<rbrakk>
+  \<Longrightarrow> \<exists>t'. (erase l c,t) \<Rightarrow> t' \<and> s' = t' (< l)"
+  oops
+lemma "\<lbrakk> (erase l c,s) \<Rightarrow> s';  0 \<turnstile> c;  s = t (< l) \<rbrakk> \<Longrightarrow> \<exists>t'. (c,t) \<Rightarrow> t'"
+  oops
+text \<open>Give an informal justification or a counterexample for each property!\<close>
+
 end
