@@ -390,15 +390,16 @@ fun erase :: "level \<Rightarrow> com \<Rightarrow> com" where
   "\<lbrakk> (c,s) \<Rightarrow> s'; (c,t) \<Rightarrow> t';  0 \<turnstile> c;  s = t (\<le> l) \<rbrakk>
    \<Longrightarrow> s' = t' (\<le> l)"
 *)
-lemma "\<lbrakk>(c, s) \<Rightarrow> s'; (erase l c, t) \<Rightarrow> t'; 0 \<turnstile> c; s = t (< l)\<rbrakk>
+theorem erase_correct:"\<lbrakk>(c, s) \<Rightarrow> s'; (erase l c, t) \<Rightarrow> t'; 0 \<turnstile> c; s = t (< l)\<rbrakk>
        \<Longrightarrow> s' = t' (< l)"
-  sorry
-(*proof(induction arbitrary: t t' rule: big_step_induct)
+(*  sorry*)
+proof(induction arbitrary: t t' rule: big_step_induct)
 case (Skip s)
   then show ?case by auto
 next
   case (Assign x a s)
-  have [simp]:"t' = t(x := aval a t)" using Assign sorry
+  have [simp]:"t' = t(x := aval a t)" using \<open>(erase l (x ::= a), t) \<Rightarrow> t'\<close> \<open>0 \<turnstile> x ::= a\<close> Assign
+    sorry
   have "sec a \<le> sec x"  using \<open>0 \<turnstile> x ::= a\<close> by auto
   show ?case 
   proof auto
@@ -416,7 +417,21 @@ next
   qed
 next
   case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
-  then show ?case by blast
+(*
+    (c\<^sub>1, s\<^sub>1) \<Rightarrow> s\<^sub>2
+    (c\<^sub>2, s\<^sub>2) \<Rightarrow> s\<^sub>3
+previous:
+    (c\<^sub>1, ?t) \<Rightarrow> ?t' \<Longrightarrow> 0 \<turnstile> c\<^sub>1 \<Longrightarrow> s\<^sub>1 = ?t (\<le> l) \<Longrightarrow> s\<^sub>2 = ?t' (\<le> l)
+    (c\<^sub>2, ?t) \<Rightarrow> ?t' \<Longrightarrow> 0 \<turnstile> c\<^sub>2 \<Longrightarrow> s\<^sub>2 = ?t (\<le> l) \<Longrightarrow> s\<^sub>3 = ?t' (\<le> l)
+    (c\<^sub>1;; c\<^sub>2, t) \<Rightarrow> t'
+this:
+    (erase l c\<^sub>1, ?t) \<Rightarrow> ?t' \<Longrightarrow> 0 \<turnstile> c\<^sub>1 \<Longrightarrow> s\<^sub>1 = ?t (< l) \<Longrightarrow> s\<^sub>2 = ?t' (< l)
+    (erase l c\<^sub>2, ?t) \<Rightarrow> ?t' \<Longrightarrow> 0 \<turnstile> c\<^sub>2 \<Longrightarrow> s\<^sub>2 = ?t (< l) \<Longrightarrow> s\<^sub>3 = ?t' (< l)
+    (erase l (c\<^sub>1;; c\<^sub>2), t) \<Rightarrow> t'
+    0 \<turnstile> c\<^sub>1;; c\<^sub>2
+    s\<^sub>1 = t (< l)
+*)
+  then show ?case sorry
 next
   case (IfTrue b s c\<^sub>1 t c\<^sub>2)
   have "sec b \<turnstile> c\<^sub>1" "sec b \<turnstile> c\<^sub>2" using \<open>0 \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2\<close> by auto
@@ -424,11 +439,11 @@ next
     proof cases
       assume "sec b \<le> l"
       then have "s = t (\<le> sec b)" 
-        using IfTrue.prems(3) \<open>sec b \<le> l\<close> by auto
+        using IfTrue.prems(3) \<open>sec b \<le> l\<close> sorry
       hence "bval b t" 
         using IfTrue.hyps(1) bval_eq_if_eq_le by blast
       with IfTrue.IH IfTrue.prems(1,3) \<open>sec b \<turnstile> c\<^sub>1\<close> anti_mono
-      show ?thesis by (auto)
+      show ?thesis sorry
     next
       assume "\<not> sec b \<le> l"
       have "sec b \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2" 
@@ -445,11 +460,11 @@ next
     proof cases
       assume "sec b \<le> l"
       then have "s = t (\<le> sec b)" 
-        using IfFalse.prems(3) le_trans by blast
+        using IfFalse.prems(3) le_trans sorry
       hence "\<not>bval b t" 
         using IfFalse.hyps(1) bval_eq_if_eq_le by auto
       with IfFalse.IH IfFalse.prems(1,3) \<open>sec b \<turnstile> c\<^sub>2\<close> anti_mono
-      show ?thesis by blast
+      show ?thesis sorry
     next
       assume "\<not> sec b \<le> l"
       have "sec b \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2" 
@@ -467,11 +482,11 @@ next
   proof cases
     assume "sec b \<le> l"
       then have "s = t (\<le> sec b)" 
-        using WhileFalse.prems(3) dual_order.trans by blast
+        using WhileFalse.prems(3) dual_order.trans sorry
       hence "\<not>bval b t" 
         using WhileFalse.hyps bval_eq_if_eq_le by blast
     then show ?thesis 
-      using WhileFalse.prems(1) WhileFalse.prems(3) by blast
+      using WhileFalse.prems(1) WhileFalse.prems(3) sorry
   next
     assume "\<not> sec b \<le> l"
       have "sec b \<turnstile> WHILE b DO c" 
@@ -489,13 +504,13 @@ next
     proof cases
       assume "sec b \<le> l"
       then have "s\<^sub>1 = t1 (\<le> sec b)" 
-        using WhileTrue.prems(3) \<open>sec b \<le> l\<close> by auto
+        using WhileTrue.prems(3) \<open>sec b \<le> l\<close> sorry
       hence "bval b t1" 
         using WhileTrue.hyps(1) bval_eq_if_eq_le by blast
       then obtain t2 where "(c, t1) \<Rightarrow> t2" "(WHILE b DO c , t2 ) \<Rightarrow> t3" 
-        using WhileTrue.prems(1) by auto
+        using WhileTrue.prems(1) sorry
       with WhileTrue.IH(1,2) WhileTrue.prems(2, 3) anti_mono
-      show ?thesis by auto
+      show ?thesis sorry
     next
       assume "\<not> sec b \<le> l"
       have "sec b \<turnstile> WHILE b DO c" 
@@ -504,15 +519,11 @@ next
         using WhileTrue.prems(1) \<open>\<not> sec b \<le> l\<close> confinement max_absorb1 by auto
       with WhileTrue.hyps(2,3) WhileTrue.prems(3) \<open>\<not> sec b \<le> l\<close> \<open>sec b \<turnstile> WHILE b DO c\<close> \<open>sec b \<turnstile> c\<close> 
       show ?thesis 
-        by (smt confinement dual_order.strict_trans not_le_imp_less order.not_eq_order_implies_strict)
+        sorry
+(*    by (smt confinement dual_order.strict_trans not_le_imp_less order.not_eq_order_implies_strict) *)
     qed
   qed
-*)
 
-theorem erase_correct:
-  "\<lbrakk> (c,s) \<Rightarrow> s'; (erase l c,t) \<Rightarrow> t';  0 \<turnstile> c;  s = t (< l) \<rbrakk>
-   \<Longrightarrow> s' = t' (< l)"
-  sorry
 
 text \<open>
 In the theorem above we assumed that both @{term"(c,s)"}
