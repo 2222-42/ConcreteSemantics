@@ -60,6 +60,6 @@ by (induct a) auto
 (* Lemma 9.10 (Noninterference for boolean expressions). *)
 lemma bval_eq_if_eq_le:
   "\<lbrakk> s\<^sub>1 = s\<^sub>2 (\<le> l);  sec b \<le> l \<rbrakk> \<Longrightarrow> bval b s\<^sub>1 = bval b s\<^sub>2"
-by (induct b) (auto simp add: aval_eq_if_eq_le)
+  by (induct b) (auto simp add: aval_eq_if_eq_le)
 
 end
