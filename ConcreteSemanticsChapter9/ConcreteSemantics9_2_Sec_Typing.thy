@@ -468,41 +468,22 @@ next
   have Hsecc: "sec b \<turnstile> c" 
     using WhileTrue.prems(2) by force
   show ?case 
-  proof cases
-(*
-
-      then obtain t2 where "(c, t1) \<Rightarrow> t2" "(WHILE b DO c , t2 ) \<Rightarrow> t3" 
-        using WhileTrue.prems(1) by auto
-      with WhileTrue.IH(1,2) WhileTrue.prems(2, 3) anti_mono
-      show ?thesis by auto
-*)
-      assume "sec b < l"
-      then have "s\<^sub>1 = t (< sec b)" 
-        using WhileTrue.prems(3) less_trans by blast 
-      hence H1:"bval b t" 
-        using WhileTrue.hyps(1) WhileTrue.prems(3) \<open>sec b < l\<close> bval_eq_if_eq_less by blast
-      then obtain t2 where H2:"(erase l c, t) \<Rightarrow> t2" "s\<^sub>2 = t2 (< l)" sorry
-    from WhileTrue(5, 6)  obtain t3 where H3: "(erase l (WHILE b DO c), t2) \<Rightarrow> t3" "s\<^sub>3 = t3 (< l)" sorry
-    with H1 H2(1) show ?thesis 
-      by (metis WhileTrue.prems(1) \<open>sec b < l\<close> big_step.WhileTrue big_step_determ erase.simps(5) leD)
-(*      with WhileTrue.IH(1,2) WhileTrue.prems(2, 3) anti_mono*)
-(*      from Hsecc WhileTrue(3, 7) obtain ti where H2: "(erase l c, t) \<Rightarrow> ti" "s\<^sub>2 = ti (< l)" sledgehammer*)
-(*        by (fastforce intro: anti_mono)*)
-(*      from WhileTrue(5, 6) H2 obtain t' where H3: "(erase l (WHILE b DO c), t2) \<Rightarrow> t'" "s\<^sub>3 = t' (< l)" by meson*)
-(*      with WhileTrue.IH(1,2) WhileTrue.prems(2, 3) anti_mono*)
-(*      then have "((WHILE b DO erase l c ), t) \<Rightarrow> t'" sorry
-      show ?thesis sledgehammer*)
-    next
-      assume "\<not> sec b < l"
-      have "sec b \<turnstile> WHILE b DO c" 
-        by (simp add: While \<open>sec b \<turnstile> c\<close>)
-      then have "s\<^sub>1 = s\<^sub>2 (< l)" 
-        using Hsecc WhileTrue.hyps(2) \<open>\<not> sec b < l\<close> confinement by auto
-      with WhileTrue.hyps(2,3) WhileTrue.prems(3) \<open>\<not> sec b < l\<close> \<open>sec b \<turnstile> WHILE b DO c\<close> \<open>sec b \<turnstile> c\<close> 
-      show ?thesis 
-        using WhileTrue.IH(2) WhileTrue.prems(1) WhileTrue.prems(2) by auto
-(*    by (smt confinement dual_order.strict_trans not_le_imp_less order.not_eq_order_implies_strict) *)
-    qed
+  proof (cases "sec b < l")
+    case True
+    with WhileTrue(1, 8) have "bval b t" by (auto simp add: bval_eq_if_eq_less)
+    with True WhileTrue(6) obtain ti where H: "(erase l c, t) \<Rightarrow> ti" "(WHILE b DO erase l c, ti) \<Rightarrow>t'" by auto
+    from this(1) Hsecc WhileTrue(8) have "s\<^sub>2 = ti (< l)" 
+      using WhileTrue.IH(1) anti_mono by blast
+    with True H(2) WhileTrue(7) show ?thesis by (intro WhileTrue(5)) auto
+  next
+    case False
+    with WhileTrue(2) Hsecc have H1: "s\<^sub>1 = s\<^sub>2 (< l)" by (auto dest: confinement)
+    from False Hsecc have "l \<turnstile> WHILE b DO c" by (intro anti_mono [of "sec b" _ l]) (auto intro: sec_type.intros)
+    with WhileTrue(4) have H2: "s\<^sub>2 = s\<^sub>3 (< l)" 
+      using WhileTrue.hyps(3) confinement by auto
+    with WhileTrue(8) H1 H2 show ?thesis 
+      using False WhileTrue.prems(1) by auto
+  qed
   qed
 
 
