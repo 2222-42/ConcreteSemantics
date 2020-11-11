@@ -40,4 +40,11 @@ primrec "defs" :: "com \<Rightarrow> tab \<Rightarrow> tab" where
 "defs (IF b THEN c1 ELSE c2) t = merge (defs c1 t) (defs c2 t)" |
 "defs (WHILE b DO c) t = t |` (-lvars c)"
 
+primrec fold where
+"fold SKIP _ = SKIP" |
+"fold (x ::= a) t = (x ::= (afold a t))" |
+"fold (c1;;c2) t = (fold c1 t;; fold c2 (defs c1 t))" |
+"fold (IF b THEN c1 ELSE c2) t = IF b THEN fold c1 t ELSE fold c2 t" |
+"fold (WHILE b DO c) t = WHILE b DO fold c (t |` (-lvars c))"
+
 end
