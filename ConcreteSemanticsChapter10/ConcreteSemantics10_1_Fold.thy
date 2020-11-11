@@ -28,7 +28,16 @@ next
   case (Plus a1 a2)
   then show ?case using assms by (auto simp: approx_def split: option.split aexp.split)
 qed
-  
-  
+
+definition
+  "merge t1 t2 = (\<lambda>m. if t1 m = t2 m then t1 m else None)"
+
+primrec "defs" :: "com \<Rightarrow> tab \<Rightarrow> tab" where
+"defs SKIP t = t" |
+"defs (x ::= a) t =
+  (case afold a t of N k \<Rightarrow> t(x \<mapsto> k) | _ \<Rightarrow> t(x:=None))" |
+"defs (c1;;c2) t = (defs c2 o defs c1) t" |
+"defs (IF b THEN c1 ELSE c2) t = merge (defs c1 t) (defs c2 t)" |
+"defs (WHILE b DO c) t = t |` (-lvars c)"
 
 end
