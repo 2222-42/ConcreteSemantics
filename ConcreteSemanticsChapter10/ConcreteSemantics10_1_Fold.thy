@@ -64,4 +64,8 @@ definition
 where
   "(P \<Turnstile> b <\<sim>> b') = (\<forall>s. P s \<longrightarrow> bval b s = bval b' s)"
 
+lemma equiv_up_to_True:
+  "((\<lambda>_. True) \<Turnstile> c \<sim> c') = (c \<sim> c')"
+  by (simp add: equiv_up_to_def)
+
 end
