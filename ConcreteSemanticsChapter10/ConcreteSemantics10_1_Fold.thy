@@ -1,5 +1,5 @@
 theory ConcreteSemantics10_1_Fold
-  imports Main "~~/src/HOL/IMP/Sem_Equiv"  "~~/src/HOL/IMP/Vars" 
+  imports Main "~~/src/HOL/IMP/Big_Step"  "~~/src/HOL/IMP/Vars" 
 begin 
 
 subsection "Simple folding of arithmetic expressions"
@@ -51,5 +51,17 @@ value "fold(''x'' ::= Plus (N 42) (N (- 5))) nil"
 value "defs (fold(''x'' ::= Plus (N 42) (N (- 5))) nil ) nil"
 value "fold(''y'' ::= Plus (V ''x'') (V ''x'')) (defs (fold(''x'' ::= Plus (N 42) (N (- 5))) nil ) nil)"
 value "fold(''x'' ::= Plus (N 42) (N (- 5));;''y'' ::= Plus (V ''x'') (V ''x'')) nil"
+
+type_synonym assn = "state \<Rightarrow> bool"
+
+definition
+  equiv_up_to :: "assn \<Rightarrow> com \<Rightarrow> com \<Rightarrow> bool" ("_ \<Turnstile> _ \<sim> _" [50,0,10] 50)
+where
+  "(P \<Turnstile> c \<sim> c') = (\<forall>s s'. P s \<longrightarrow> (c,s) \<Rightarrow> s' \<longleftrightarrow> (c',s) \<Rightarrow> s')"
+
+definition
+  bequiv_up_to :: "assn \<Rightarrow> bexp \<Rightarrow> bexp \<Rightarrow> bool" ("_ \<Turnstile> _ <\<sim>> _" [50,0,10] 50)
+where
+  "(P \<Turnstile> b <\<sim>> b') = (\<forall>s. P s \<longrightarrow> bval b s = bval b' s)"
 
 end
