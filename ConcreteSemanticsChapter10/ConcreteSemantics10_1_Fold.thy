@@ -47,4 +47,9 @@ primrec fold where
 "fold (IF b THEN c1 ELSE c2) t = IF b THEN fold c1 t ELSE fold c2 t" |
 "fold (WHILE b DO c) t = WHILE b DO fold c (t |` (-lvars c))"
 
+value "fold(''x'' ::= Plus (N 42) (N (- 5))) nil"
+value "defs (fold(''x'' ::= Plus (N 42) (N (- 5))) nil ) nil"
+value "fold(''y'' ::= Plus (V ''x'') (V ''x'')) (defs (fold(''x'' ::= Plus (N 42) (N (- 5))) nil ) nil)"
+value "fold(''x'' ::= Plus (N 42) (N (- 5));;''y'' ::= Plus (V ''x'') (V ''x'')) nil"
+
 end
