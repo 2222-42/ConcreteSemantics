@@ -163,4 +163,10 @@ proof -
 qed
 
 
+
+
+lemma approx_eq:
+  "approx t \<Turnstile> c \<sim> fold c t"
+  sorry
+
 end
