@@ -52,6 +52,8 @@ value "defs (fold(''x'' ::= Plus (N 42) (N (- 5))) nil ) nil"
 value "fold(''y'' ::= Plus (V ''x'') (V ''x'')) (defs (fold(''x'' ::= Plus (N 42) (N (- 5))) nil ) nil)"
 value "fold(''x'' ::= Plus (N 42) (N (- 5));;''y'' ::= Plus (V ''x'') (V ''x'')) nil"
 
+subsection "Semantic Equivalence up to a Condition"
+
 type_synonym assn = "state \<Rightarrow> bool"
 
 definition
@@ -69,6 +71,22 @@ lemma equiv_up_to_True:
   "((\<lambda>_. True) \<Turnstile> c \<sim> c') = (c \<sim> c')"
   by (simp add: equiv_up_to_def)
 
+lemma equiv_up_to_weaken:
+  "P \<Turnstile> c \<sim> c' \<Longrightarrow> (\<And>s. P' s \<Longrightarrow> P s) \<Longrightarrow> P' \<Turnstile> c \<sim> c'"
+  by (simp add: equiv_up_to_def)
+
+lemma equiv_up_toI:
+  "(\<And>s s'. P s \<Longrightarrow> (c, s) \<Rightarrow> s' = (c', s) \<Rightarrow> s') \<Longrightarrow> P \<Turnstile> c \<sim> c'"
+  by (unfold equiv_up_to_def) blast
+
+lemma equiv_up_toD1:
+  "P \<Turnstile> c \<sim> c' \<Longrightarrow> (c, s) \<Rightarrow> s' \<Longrightarrow> P s \<Longrightarrow> (c', s) \<Rightarrow> s'"
+  by (unfold equiv_up_to_def) blast
+
+lemma equiv_up_toD2:
+  "P \<Turnstile> c \<sim> c' \<Longrightarrow> (c', s) \<Rightarrow> s' \<Longrightarrow> P s \<Longrightarrow> (c, s) \<Rightarrow> s'"
+  by (unfold equiv_up_to_def) blast
+
 (* Lemma 10.8 (Equivalence Relation). *)
 lemma equiv_up_to_refl [simp, intro!]:
   "P \<Turnstile> c \<sim> c"
@@ -82,6 +100,67 @@ lemma equiv_up_to_trans:
   "P \<Turnstile> c \<sim> c' \<Longrightarrow> P \<Turnstile> c' \<sim> c'' \<Longrightarrow> P \<Turnstile> c \<sim> c''"
   by(auto simp add: equiv_up_to_def)
 
+
+lemma bequiv_up_to_refl [simp, intro!]:
+  "P \<Turnstile> b <\<sim>> b"
+  by (auto simp: bequiv_up_to_def)
+
+lemma bequiv_up_to_sym:
+  "(P \<Turnstile> b <\<sim>> b') = (P \<Turnstile> b' <\<sim>> b)"
+  by (auto simp: bequiv_up_to_def)
+
+lemma bequiv_up_to_trans:
+  "P \<Turnstile> b <\<sim>> b' \<Longrightarrow> P \<Turnstile> b' <\<sim>> b'' \<Longrightarrow> P \<Turnstile> b <\<sim>> b''"
+  by (auto simp: bequiv_up_to_def)
+
+lemma bequiv_up_to_subst:
+  "P \<Turnstile> b <\<sim>> b' \<Longrightarrow> P s \<Longrightarrow> bval b s = bval b' s"
+  by (simp add: bequiv_up_to_def)
+
+(* Congruence rules *)
+lemma equiv_up_to_seq:
+  "P \<Turnstile> c \<sim> c' \<Longrightarrow> Q \<Turnstile> d \<sim> d' \<Longrightarrow>
+  (\<And>s s'. (c,s) \<Rightarrow> s' \<Longrightarrow> P s \<Longrightarrow> Q s') \<Longrightarrow>
+  P \<Turnstile> (c;; d) \<sim> (c';; d')"
+  apply(simp add: equiv_up_to_def)
+  apply blast
+  done
+
+lemma equiv_up_to_if_weak:
+  "P \<Turnstile> b <\<sim>> b' \<Longrightarrow> P \<Turnstile> c \<sim> c' \<Longrightarrow> P \<Turnstile> d \<sim> d' \<Longrightarrow>
+   P \<Turnstile> IF b THEN c ELSE d \<sim> IF b' THEN c' ELSE d'"
+  apply(auto simp: bequiv_up_to_def equiv_up_to_def)
+  done
+
+
+lemma equiv_up_to_while_lemma_weak:
+  shows "(d,s) \<Rightarrow> s' \<Longrightarrow>
+         P \<Turnstile> b <\<sim>> b' \<Longrightarrow>
+         P \<Turnstile> c \<sim> c' \<Longrightarrow>
+         (\<And>s s'. (c, s) \<Rightarrow> s' \<Longrightarrow> P s \<Longrightarrow> bval b s \<Longrightarrow> P s') \<Longrightarrow>
+         P s \<Longrightarrow>
+         d = WHILE b DO c \<Longrightarrow>
+         (WHILE b' DO c', s) \<Rightarrow> s'"
+  sorry
+
+lemma equiv_up_to_while_weak:
+  assumes b: "P \<Turnstile> b <\<sim>> b'"
+  assumes c: "P \<Turnstile> c \<sim> c'"
+  assumes I: "\<And>s s'. (c, s) \<Rightarrow> s' \<Longrightarrow> P s \<Longrightarrow> bval b s \<Longrightarrow> P s'"
+  shows "P \<Turnstile> WHILE b DO c \<sim> WHILE b' DO c'"
+proof -
+  from b have b': "P \<Turnstile> b' <\<sim>> b" 
+    by (simp add: bequiv_up_to_sym)
+  from c have c': "P \<Turnstile> c' \<sim> c" 
+    by (simp add: equiv_up_to_sym)
+
+  from I have I' :"\<And>s s'. (c', s) \<Rightarrow> s' \<Longrightarrow> P s \<Longrightarrow> bval b' s \<Longrightarrow> P s'"
+    using b' bequiv_up_to_subst c' equiv_up_to_def by auto
+
+  note equiv_up_to_while_lemma_weak [OF _ b c]
+       equiv_up_to_while_lemma_weak [OF _ b' c']
+  thus ?thesis using I I' by (auto intro!: equiv_up_toI)
+qed
 
 
 end
