@@ -29,6 +29,11 @@ next
   then show ?case using assms by (auto simp: approx_def split: option.split aexp.split)
 qed
 
+theorem aval_afold_N:
+assumes "approx t s"
+shows "afold a t = N n \<Longrightarrow> aval a s = n"
+  by (metis assms aval.simps(1) aval_afold)
+
 definition
   "merge t1 t2 = (\<lambda>m. if t1 m = t2 m then t1 m else None)"
 
@@ -163,7 +168,46 @@ proof -
 qed
 
 
+lemma approx_merge:
+  "approx t1 s \<or> approx t2 s \<Longrightarrow> approx (merge t1 t2) s"
+  by (fastforce simp: merge_def approx_def)
 
+(* Lemma 10.9 (defs approximates execution correctly). *)
+lemma big_step_pres_approx:
+  "(c,s) \<Rightarrow> s' \<Longrightarrow> approx t s \<Longrightarrow> approx (defs c t) s'"
+proof(induction arbitrary: t rule: big_step_induct )
+case (Skip s)
+  then show ?case by simp
+next
+  case (Assign x a s)
+  then show ?case 
+    (*by(simp add: approx_def split: aexp.split)*)
+    by(simp add: aval_afold_N approx_def split: aexp.split)
+next
+  case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
+(*
+  (\<And>t. approx t ?s\<^sub>12 \<Longrightarrow> approx (defs ?c\<^sub>12 t) ?s\<^sub>22) \<Longrightarrow>
+  (\<And>t. approx t ?s\<^sub>22 \<Longrightarrow> approx (defs ?c\<^sub>22 t) ?s\<^sub>32) \<Longrightarrow>
+*)
+  have "approx (defs c\<^sub>1 t) s\<^sub>2" 
+    by (simp add: Seq.IH(1) Seq.prems)
+  have "approx (defs c\<^sub>2 (defs c\<^sub>1 t)) s\<^sub>3" 
+    by (simp add: Seq.IH(2) \<open>approx (defs c\<^sub>1 t) s\<^sub>2\<close>)
+  then show ?case 
+    by simp
+next
+  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
+  then show ?case sorry
+next
+case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  then show ?case sorry
+next
+  case (WhileFalse b s c)
+  then show ?case sorry
+next
+case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
+  then show ?case sorry
+qed
 
 lemma approx_eq:
   "approx t \<Turnstile> c \<sim> fold c t"
