@@ -64,8 +64,24 @@ definition
 where
   "(P \<Turnstile> b <\<sim>> b') = (\<forall>s. P s \<longrightarrow> bval b s = bval b' s)"
 
+(* Lemma 10.7. *)
 lemma equiv_up_to_True:
   "((\<lambda>_. True) \<Turnstile> c \<sim> c') = (c \<sim> c')"
   by (simp add: equiv_up_to_def)
+
+(* Lemma 10.8 (Equivalence Relation). *)
+lemma equiv_up_to_refl [simp, intro!]:
+  "P \<Turnstile> c \<sim> c"
+  by (simp add: equiv_up_to_def)
+
+lemma equiv_up_to_sym:
+  "(P \<Turnstile> c \<sim> c') = (P \<Turnstile> c' \<sim> c)"
+  by (auto simp add: equiv_up_to_def)
+
+lemma equiv_up_to_trans:
+  "P \<Turnstile> c \<sim> c' \<Longrightarrow> P \<Turnstile> c' \<sim> c'' \<Longrightarrow> P \<Turnstile> c \<sim> c''"
+  by(auto simp add: equiv_up_to_def)
+
+
 
 end
