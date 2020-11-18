@@ -172,10 +172,64 @@ lemma approx_merge:
   "approx t1 s \<or> approx t2 s \<Longrightarrow> approx (merge t1 t2) s"
   by (fastforce simp: merge_def approx_def)
 
+lemma merge_restrict:
+  assumes "t1 |` S = t |` S"
+  assumes "t2 |` S = t |` S"
+  shows "merge t1 t2 |` S = t |` S"
+proof -
+  from assms
+  have "\<forall>x. (t1 |` S) x = (t |` S) x"
+   and "\<forall>x. (t2 |` S) x = (t |` S) x" by auto
+  thus ?thesis
+    by (auto simp: merge_def restrict_map_def
+             split: if_splits)
+qed
+
 (* Lemma 10.10. *)
 lemma defs_restrict:
   "defs c t |` (- lvars c) = t |` (- lvars c)"
-  sorry
+proof(induction c arbitrary: t)
+  case SKIP
+  then show ?case 
+    by simp
+next
+  case (Assign x1 x2)
+  then show ?case by (auto split: aexp.split)
+next
+  case (Seq c1 c2)
+(*
+    defs c1 ?t |` (- lvars c1) = ?t |` (- lvars c1)
+    defs c2 ?t |` (- lvars c2) = ?t |` (- lvars c2)
+
+defs (?c1.2;; ?c2.2) ?ta2 |` (- lvars (?c1.2;; ?c2.2)) = ?ta2 |` (- lvars (?c1.2;; ?c2.2)) 
+*)
+  have "defs c2 (defs c1 t) |` (- lvars c2) |` (- lvars c1) =
+         defs c1 t |` (- lvars c2) |` (- lvars c1)" 
+    by (simp add: Seq.IH(2))
+  moreover have "defs c1 t |` (- lvars c1) |` (-lvars c2) =
+         t |` (- lvars c1) |` (-lvars c2)" 
+    by (simp add: Seq.IH(1))
+  ultimately show ?case 
+    by (simp add: Int_commute)
+next
+  case (If x1 c1 c2)
+(*
+  (\<And>t. defs ?c1.2 t |` (- lvars ?c1.2) = t |` (- lvars ?c1.2)) \<Longrightarrow>
+  (\<And>t. defs ?c2.2 t |` (- lvars ?c2.2) = t |` (- lvars ?c2.2)) \<Longrightarrow>
+  defs (IF ?x1.2 THEN ?c1.2 ELSE ?c2.2) ?ta2 |` (- lvars (IF ?x1.2 THEN ?c1.2 ELSE ?c2.2)) =
+  ?ta2 |` (- lvars (IF ?x1.2 THEN ?c1.2 ELSE ?c2.2)) 
+*)
+  have "defs c1 t |` (- lvars c1) |` (- lvars c2) =
+         t |` (- lvars c1) |` (- lvars c2)" 
+    using If.IH(1) by auto
+  moreover have "defs c2 t |` (- lvars c1) |` (-lvars c2) =
+         t |` (- lvars c1) |` (-lvars c2)" 
+    by (metis If.IH(2) inf_sup_aci(1) restrict_restrict)
+  ultimately  show ?case by (auto simp: Int_commute intro: merge_restrict)
+next
+  case (While x1 c)
+  then show ?case by (auto split: aexp.split)
+qed
 
 
 (* Lemma 10.9 (defs approximates execution correctly). *)
