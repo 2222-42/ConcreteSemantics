@@ -172,6 +172,12 @@ lemma approx_merge:
   "approx t1 s \<or> approx t2 s \<Longrightarrow> approx (merge t1 t2) s"
   by (fastforce simp: merge_def approx_def)
 
+(* Lemma 10.10. *)
+lemma defs_restrict:
+  "defs c t |` (- lvars c) = t |` (- lvars c)"
+  sorry
+
+
 (* Lemma 10.9 (defs approximates execution correctly). *)
 lemma big_step_pres_approx:
   "(c,s) \<Rightarrow> s' \<Longrightarrow> approx t s \<Longrightarrow> approx (defs c t) s'"
@@ -197,16 +203,23 @@ next
     by simp
 next
   case (IfTrue b s c\<^sub>1 t c\<^sub>2)
-  then show ?case sorry
+  then show ?case 
+    by (simp add: approx_merge)
 next
-case (IfFalse b s c\<^sub>2 t c\<^sub>1)
-  then show ?case sorry
+  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  then show ?case 
+    by (simp add: approx_merge)
 next
   case (WhileFalse b s c)
-  then show ?case sorry
+  then show ?case 
+    by (simp add: approx_def restrict_map_def)
 next
-case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
-  then show ?case sorry
+  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
+  hence "approx (defs c t) s\<^sub>2" by simp
+  then have "approx (defs c t |` (-lvars c)) s\<^sub>3" 
+    using WhileTrue.IH(2) by auto
+  then show ?case 
+    by (simp add: defs_restrict)
 qed
 
 lemma approx_eq:
