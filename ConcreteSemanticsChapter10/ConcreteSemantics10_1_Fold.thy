@@ -172,6 +172,13 @@ lemma approx_merge:
   "approx t1 s \<or> approx t2 s \<Longrightarrow> approx (merge t1 t2) s"
   by (fastforce simp: merge_def approx_def)
 
+lemma approx_map_le:
+  "approx t2 s \<Longrightarrow> t1 \<subseteq>\<^sub>m t2 \<Longrightarrow> approx t1 s"
+  by (clarsimp simp: approx_def map_le_def dom_def)
+
+lemma restrict_map_le [intro!, simp]: "t |` S \<subseteq>\<^sub>m t"
+  by (clarsimp simp: restrict_map_def map_le_def)
+
 lemma merge_restrict:
   assumes "t1 |` S = t |` S"
   assumes "t2 |` S = t |` S"
@@ -276,8 +283,105 @@ next
     by (simp add: defs_restrict)
 qed
 
+(* Lemma 10.11. *)
+
+lemma big_step_pres_approx_restrict:
+  "(c,s) \<Rightarrow> s' \<Longrightarrow> approx (t |` (-lvars c)) s \<Longrightarrow> approx (t |` (-lvars c)) s'"
+proof(induction arbitrary: t rule: big_step_induct)
+case (Skip s)
+  then show ?case by simp
+next
+  case (Assign x a s)
+  then show ?case by(simp add: aval_afold_N approx_def split: aexp.split)
+next
+  case (Seq c1 s1 s2 c2 s3)
+(*
+using this:
+    defs c2 (defs c1 t) |` (- lvars c2) |` (- lvars c1) =
+    defs c1 t |` (- lvars c2) |` (- lvars c1)
+    defs c1 t |` (- lvars c1) |` (- lvars c2) = t |` (- lvars c1) |` (- lvars c2)
+
+goal (1 subgoal):
+ 1. approx (t |` (- lvars (c1;; c2))) s3
+*)
+  then have "approx (t |` (-lvars c2) |` (-lvars c1)) s1" by (simp add: Int_commute)
+  hence "approx (t |` (-lvars c2) |` (-lvars c1)) s2"
+    by (rule Seq)
+  hence "approx (t |` (-lvars c1) |` (-lvars c2)) s2"
+    by (simp add: Int_commute)
+  then have "approx (t |` (-lvars c1) |` (-lvars c2)) s3" 
+    using Seq.IH(2) by blast
+  then show ?case by simp
+next
+  case (IfTrue b s c1 s' c2)
+(*
+using this:
+    bval b s
+    (c\<^sub>1, s) \<Rightarrow> ta__
+    approx (?t |` (- lvars c\<^sub>1)) s \<Longrightarrow> approx (?t |` (- lvars c\<^sub>1)) ta__
+    approx (t |` (- lvars (IF b THEN c\<^sub>1 ELSE c\<^sub>2))) s
+
+goal (1 subgoal):
+ 1. approx (t |` (- lvars (IF b THEN c\<^sub>1 ELSE c\<^sub>2))) ta__
+*)
+  then have "approx (t |` (-lvars c2) |` (-lvars c1)) s" by (simp add: Int_commute)
+  then have "approx (t |` (-lvars c2) |` (-lvars c1)) s'" 
+    using IfTrue.IH by blast
+  then show ?case 
+    (*by (simp add: approx_merge)*)
+    by (simp add: Int_commute)
+next
+  case (IfFalse b s c2 s' c1)
+  then have "approx (t |` (-lvars c1) |` (-lvars c2)) s" by (simp add: Int_commute)
+  then have "approx (t |` (-lvars c1) |` (-lvars c2)) s'" 
+    using IfFalse.IH by blast
+  then show ?case 
+    (*by (simp add: approx_merge)*)
+    by (simp add: Int_commute)
+next
+  case (WhileFalse b s c)
+  then show ?case 
+    by (simp add: approx_def restrict_map_def)
+next
+  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
+  then show ?case 
+    by (simp add: defs_restrict)
+qed
+
+(* Lemma 10.12 (Generalized correctness of constant folding). *) 
+text \<open>
+the declaration is needed to prove the case of Assign.
+\<close>
+declare assign_simp [simp]
+
 lemma approx_eq:
   "approx t \<Turnstile> c \<sim> fold c t"
-  sorry
+  proof(induction c arbitrary: t)
+case SKIP
+  then show ?case by simp
+next
+  case (Assign x1 x2)
+  then show ?case by (auto simp: equiv_up_to_def)
+next
+  case (Seq c1 c2)
+  then show ?case 
+    by (auto intro!: equiv_up_to_seq big_step_pres_approx)
+(*    by (smt ConcreteSemantics10_1_Fold.fold.simps(3) big_step_pres_approx equiv_up_to_seq)*)
+next
+  case (If x1 c1 c2)
+  then show ?case 
+    by (simp add: equiv_up_to_if_weak)
+next
+  case (While x1 c)
+(*
+ 1. \<And>x1 c t.
+       (\<And>t. approx t \<Turnstile> c \<sim> ConcreteSemantics10_1_Fold.fold c t) \<Longrightarrow>
+       approx t \<Turnstile> WHILE x1 DO c \<sim> ConcreteSemantics10_1_Fold.fold (WHILE x1 DO c) t
+*)
+  then have "approx (t |` (- lvars c)) \<Turnstile> WHILE x1 DO c \<sim> WHILE x1 DO fold c (t |` (-lvars c))" 
+    by (simp add: big_step_pres_approx_restrict equiv_up_to_while_weak)
+  then show ?case 
+    by (simp add: approx_map_le equiv_up_to_def)
+qed
 
 end
