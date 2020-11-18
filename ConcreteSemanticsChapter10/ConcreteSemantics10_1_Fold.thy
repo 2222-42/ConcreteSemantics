@@ -352,7 +352,7 @@ qed
 text \<open>
 the declaration is needed to prove the case of Assign.
 \<close>
-declare assign_simp [simp]
+(*declare assign_simp [simp]*)
 
 lemma approx_eq:
   "approx t \<Turnstile> c \<sim> fold c t"
@@ -361,7 +361,7 @@ case SKIP
   then show ?case by simp
 next
   case (Assign x1 x2)
-  then show ?case by (auto simp: equiv_up_to_def)
+  then show ?case by (auto simp: assign_simp equiv_up_to_def)
 next
   case (Seq c1 c2)
   then show ?case 
