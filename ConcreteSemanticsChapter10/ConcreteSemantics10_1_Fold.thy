@@ -384,4 +384,16 @@ next
     by (simp add: approx_map_le equiv_up_to_def)
 qed
 
+
+(*Theorem 10.13 (Correctness of constant folding).*)
+lemma approx_empty [simp]:
+  "approx Map.empty = (\<lambda>_. True)"
+  by (auto simp: approx_def)
+
+theorem constant_folding_equiv:
+  "fold c Map.empty \<sim> c"
+  using approx_eq
+  by (metis approx_empty equiv_up_toD1 equiv_up_toD2)
+
+
 end
