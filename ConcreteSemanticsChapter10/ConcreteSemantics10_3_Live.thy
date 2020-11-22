@@ -66,4 +66,32 @@ by auto
 text\<open>Disable L WHILE equation and reason only with L WHILE constraints\<close>
 declare L.simps(5)[simp del]
 
+subsection "Correctness"
+
+theorem L_correct:
+  "(c,s) \<Rightarrow> s'  \<Longrightarrow> s = t on L c X \<Longrightarrow>
+  \<exists> t'. (c,t) \<Rightarrow> t' & s' = t' on X"
+proof (induction arbitrary: X t rule: big_step_induct)
+case (Skip s)
+  then show ?case by auto
+next
+  case (Assign x a s)
+  then show ?case by (auto simp add: ball_Un)
+next
+  case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
+  then show ?case sorry
+next
+  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
+  then show ?case sorry
+next
+  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
+  then show ?case sorry
+next
+  case (WhileFalse b s c)
+  then show ?case sorry
+next
+  case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
+  then show ?case sorry
+qed
+
 end
