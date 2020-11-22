@@ -53,5 +53,17 @@ lemma L_While_pfp: "L c (L (WHILE b DO c) X) \<subseteq> L (WHILE b DO c) X"
   apply(auto simp add: L_gen_kill)
   done
 
+lemma L_While_lpfp:
+  "vars b \<union> X \<union> L c P \<subseteq> P \<Longrightarrow> L (WHILE b DO c) X \<subseteq> P"
+by(simp add: L_gen_kill)
+
+lemma L_While_vars: "vars b \<subseteq> L (WHILE b DO c) X"
+by auto
+
+lemma L_While_X: "X \<subseteq> L (WHILE b DO c) X"
+by auto
+
+text\<open>Disable L WHILE equation and reason only with L WHILE constraints\<close>
+declare L.simps(5)[simp del]
 
 end
