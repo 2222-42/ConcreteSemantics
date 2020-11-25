@@ -148,4 +148,15 @@ next
     using \<open>(c, t) \<Rightarrow> t2\<close> \<open>bval b t\<close> by blast
 qed
 
+subsection "Program Optimization"
+
+text\<open>Burying assignments to dead variables:\<close>
+fun bury :: "com \<Rightarrow> vname set \<Rightarrow> com" where
+"bury SKIP X = SKIP" |
+"bury (x ::= a) X = (if x \<in> X then x ::= a else SKIP)" |
+"bury (c\<^sub>1;; c\<^sub>2) X = (bury c\<^sub>1 (L c\<^sub>2 X);; bury c\<^sub>2 X)" |
+"bury (IF b THEN c\<^sub>1 ELSE c\<^sub>2) X = IF b THEN bury c\<^sub>1 X ELSE bury c\<^sub>2 X" |
+"bury (WHILE b DO c) X = WHILE b DO bury c (L (WHILE b DO c) X)"
+
+
 end
