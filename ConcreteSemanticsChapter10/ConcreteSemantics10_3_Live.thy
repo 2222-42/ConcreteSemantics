@@ -79,19 +79,73 @@ next
   then show ?case by (auto simp add: ball_Un)
 next
   case (Seq c\<^sub>1 s\<^sub>1 s\<^sub>2 c\<^sub>2 s\<^sub>3)
-  then show ?case sorry
+(*
+       (c\<^sub>1, s\<^sub>1) \<Rightarrow> s\<^sub>2 \<Longrightarrow>
+       (\<And>X t. s\<^sub>1 = t on L c\<^sub>1 X \<Longrightarrow> \<exists>t'. (c\<^sub>1, t) \<Rightarrow> t' \<and> s\<^sub>2 = t' on X) \<Longrightarrow>
+       (c\<^sub>2, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<Longrightarrow>
+       (\<And>X t. s\<^sub>2 = t on L c\<^sub>2 X \<Longrightarrow> \<exists>t'. (c\<^sub>2, t) \<Rightarrow> t' \<and> s\<^sub>3 = t' on X) \<Longrightarrow>
+       s\<^sub>1 = t on L (c\<^sub>1;; c\<^sub>2) X \<Longrightarrow> \<exists>t'. (c\<^sub>1;; c\<^sub>2, t) \<Rightarrow> t' \<and> s\<^sub>3 = t' on X
+*)
+  from Seq.IH(1) Seq.prems obtain t2 where "(c\<^sub>1, t) \<Rightarrow> t2" and "s\<^sub>2 = t2 on L c\<^sub>2 X" 
+    by simp blast
+  obtain t3 where "(c\<^sub>2, t2) \<Rightarrow> t3" and "s\<^sub>3 = t3 on X" 
+    using Seq.IH(2) \<open>s\<^sub>2 = t2 on L c\<^sub>2 X\<close> by blast
+  then show ?case 
+    using \<open>(c\<^sub>1, t) \<Rightarrow> t2\<close> by blast
 next
-  case (IfTrue b s c\<^sub>1 t c\<^sub>2)
-  then show ?case sorry
+  case (IfTrue b s c\<^sub>1 s' c\<^sub>2)
+(*
+       bval b s \<Longrightarrow>
+       (c\<^sub>1, s) \<Rightarrow> t \<Longrightarrow>
+       (\<And>X ta. s = ta on L c\<^sub>1 X \<Longrightarrow> \<exists>t'. (c\<^sub>1, ta) \<Rightarrow> t' \<and> t = t' on X) \<Longrightarrow>
+       s = ta on L (IF b THEN c\<^sub>1 ELSE c\<^sub>2) X \<Longrightarrow>
+       \<exists>t'. (IF b THEN c\<^sub>1 ELSE c\<^sub>2, ta) \<Rightarrow> t' \<and> t = t' on X
+*)
+  then have "s = t on vars b" and "s = t on L c\<^sub>1 X " by auto
+  have "bval b t" 
+    using IfTrue.hyps(1) \<open>s = t on vars b\<close> bval_eq_if_eq_on_vars by blast
+ from IfTrue.IH[OF \<open>s = t on L c\<^sub>1 X\<close>] obtain t' where "s' = t' on X"  "(c\<^sub>1, t) \<Rightarrow> t'" by auto
+  then show ?case 
+    using \<open>bval b t\<close> by blast
 next
-  case (IfFalse b s c\<^sub>2 t c\<^sub>1)
-  then show ?case sorry
+  case (IfFalse b s c\<^sub>2 s' c\<^sub>1)
+  then have "s = t on vars b" and "s = t on L c\<^sub>2 X " by auto
+  have "\<not> bval b t" 
+    using IfFalse.hyps(1) \<open>s = t on vars b\<close> bval_eq_if_eq_on_vars by blast
+ from IfFalse.IH[OF \<open>s = t on L c\<^sub>2 X\<close>] obtain t' where "s' = t' on X"  "(c\<^sub>2, t) \<Rightarrow> t'" by auto
+  then show ?case using \<open>\<not> bval b t\<close> by blast
 next
   case (WhileFalse b s c)
-  then show ?case sorry
+(*
+       \<not> bval b s \<Longrightarrow>
+       s = t on L (WHILE b DO c) X \<Longrightarrow> \<exists>t'. (WHILE b DO c, t) \<Rightarrow> t' \<and> s = t' on X
+*)
+  then have "~ bval b t" 
+    by (metis L_While_vars bval_eq_if_eq_on_vars subsetD)
+  thus ?case 
+    using L_While_X WhileFalse.prems by blast
 next
   case (WhileTrue b s\<^sub>1 c s\<^sub>2 s\<^sub>3)
-  then show ?case sorry
+(*
+       bval b s\<^sub>1 \<Longrightarrow>
+       (c, s\<^sub>1) \<Rightarrow> s\<^sub>2 \<Longrightarrow>
+       (\<And>X t. s\<^sub>1 = t on L c X \<Longrightarrow> \<exists>t'. (c, t) \<Rightarrow> t' \<and> s\<^sub>2 = t' on X) \<Longrightarrow>
+       (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<Longrightarrow>
+       (\<And>X t. s\<^sub>2 = t on L (WHILE b DO c) X \<Longrightarrow>
+               \<exists>t'. (WHILE b DO c, t) \<Rightarrow> t' \<and> s\<^sub>3 = t' on X) \<Longrightarrow>
+       s\<^sub>1 = t on L (WHILE b DO c) X \<Longrightarrow> \<exists>t'. (WHILE b DO c, t) \<Rightarrow> t' \<and> s\<^sub>3 = t' on X
+*)
+  let ?w = "WHILE b DO c"
+  have "bval b t" 
+    by (metis L_While_vars WhileTrue.hyps(1) WhileTrue.prems bval_eq_if_eq_on_vars subsetD)
+  then have "s\<^sub>1 = t on L c (L ?w X)" 
+    using L_While_pfp WhileTrue.prems by blast
+  obtain t2 where "(c, t) \<Rightarrow> t2" "s\<^sub>2 = t2 on L ?w X" 
+    using WhileTrue.IH(1) \<open>s\<^sub>1 = t on L c (L (WHILE b DO c) X)\<close> by blast
+  obtain t3 where "(?w, t2) \<Rightarrow> t3" "s\<^sub>3 = t3 on X" 
+    using WhileTrue.IH(2) \<open>s\<^sub>2 = t2 on L (WHILE b DO c) X\<close> by blast
+  then show ?case 
+    using \<open>(c, t) \<Rightarrow> t2\<close> \<open>bval b t\<close> by blast
 qed
 
 end
