@@ -160,7 +160,6 @@ fun bury :: "com \<Rightarrow> vname set \<Rightarrow> com" where
 
 
 (* Lemma 10.19 (Correctness of bury, part 1). *)
-
 theorem bury_correct:
   "(c,s) \<Rightarrow> s'  \<Longrightarrow> s = t on L c X \<Longrightarrow>
   \<exists> t'. (bury c X,t) \<Rightarrow> t' & s' = t' on X"
@@ -216,6 +215,11 @@ next
     using \<open>(bury c (L (WHILE b DO c) X), t) \<Rightarrow> t2\<close> \<open>bval b t\<close> by auto
 qed
 
+(* Lemma 10.20 (Correctness of bury, part 2). *)
 
+(* Corollary 10.21 (Correctness of bury). *)
+corollary final_bury_correct: "(c,s) \<Rightarrow> s' \<Longrightarrow> (bury c UNIV,s) \<Rightarrow> s'"
+using bury_correct[of c s s' UNIV]
+  by (auto simp: fun_eq_iff[symmetric])
 
 end
