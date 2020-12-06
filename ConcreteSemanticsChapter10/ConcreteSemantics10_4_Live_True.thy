@@ -43,14 +43,25 @@ proof-
     by (simp add: monoI)
 qed
 
+lemma mono_union_L:
+  "mono (\<lambda>Y. X \<union> L c Y)"
+  by (smt L_mono le_iff_sup le_sup_iff monoI mono_Un sup.idem sup.mono)
+
+lemma L_While_unfold: "L (WHILE b DO c) X = vars b \<union> X \<union> L c (L (WHILE b DO c) X)"
+  apply(metis lfp_unfold[OF mono_union_L] L.simps(5))
+  done
+(*
+ 1. lfp (\<lambda>Y. vars b \<union> X \<union> L c Y) = vars b \<union> X \<union> L c (lfp (\<lambda>Y. vars b \<union> X \<union> L c Y)) 
+*)
+
 lemma L_While_pfp: "L c (L (WHILE b DO c) X) \<subseteq> L (WHILE b DO c) X"
-  sorry
+  using L_While_unfold by blast
 
 lemma L_While_vars: "vars b \<subseteq> L (WHILE b DO c) X"
-  sorry
+  using L_While_unfold by auto
 
 lemma L_While_X: "X \<subseteq> L (WHILE b DO c) X"
-  sorry
+  using L_While_unfold by auto
 
 
 subsubsection "Correctness"
