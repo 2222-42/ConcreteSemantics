@@ -144,7 +144,42 @@ next
     by (simp add: \<open>lfp (\<lambda>Y. vars x1 \<union> X \<union> L c Y) \<subseteq> vars x1 \<union> rvars c \<union> X\<close>)
 qed
 
+(* Lemma 10.34. *)
+lemma L_While: fixes b c X
+assumes "finite X" defines "f == \<lambda>Y. vars b \<union> X \<union> L c Y"
+shows "L (WHILE b DO c) X = while (\<lambda>Y. f Y \<noteq> Y) f {}" (is "_ = ?r")
+proof -
+  let ?V = "vars b \<union> rvars c \<union> X"
+  have "lfp f = ?r"
+  proof(rule lfp_while[where C = ?V])
+(* 1. mono f
+ 2. \<And>Xa. Xa \<subseteq> vars b \<union> rvars c \<union> X \<Longrightarrow> f Xa \<subseteq> vars b \<union> rvars c \<union> X
+ 3. finite (vars b \<union> rvars c \<union> X)*)
+    show "mono f" 
+      by (metis (no_types, lifting) L_mono Un_mono f_def le_iff_sup mono_def sup.idem)
+  next
+    fix Xa show " Xa \<subseteq> vars b \<union> rvars c \<union> X \<Longrightarrow> f Xa \<subseteq> vars b \<union> rvars c \<union> X" 
+      using L_subset_vars f_def by auto
+  next
+    show "finite (vars b \<union> rvars c \<union> X)" 
+      by (simp add: assms(1))
+  qed
+  thus ?thesis  by (simp add: f_def)
+qed
 
+lemma L_While_set: "L (WHILE b DO c) (set xs) =
+  (let f = (\<lambda>Y. vars b \<union> set xs \<union> L c Y)
+   in while (\<lambda>Y. f Y \<noteq> Y) f {})"
+  using L_While by auto
+
+text\<open>Replace the equation for \<open>L (WHILE \<dots>)\<close> by the executable @{thm[source] L_While_set}:\<close>
+lemmas [code] = L.simps(1-4) L_While_set
+text\<open>Sorry, this syntax is odd.\<close>
+
+text\<open>A test:\<close>
+lemma "(let b = Less (N 0) (V ''y''); c = ''y'' ::= V ''x'';; ''x'' ::= V ''z''
+  in L (WHILE b DO c) {''y''}) = {''x'', ''y'', ''z''}"
+  by eval
 
 subsubsection "Limiting the number of iterations"
 
