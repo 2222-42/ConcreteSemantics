@@ -63,7 +63,6 @@ lemma L_While_vars: "vars b \<subseteq> L (WHILE b DO c) X"
 lemma L_While_X: "X \<subseteq> L (WHILE b DO c) X"
   using L_While_unfold by auto
 
-
 subsubsection "Correctness"
 (*Lemma 10.31 (Correctness of L).*)
 theorem L_correct:
@@ -118,5 +117,56 @@ next
   then show ?case 
     using \<open>(c, t) \<Rightarrow> t2\<close> \<open>bval b t\<close> by blast
 qed
+
+subsubsection "Executability"
+
+lemma L_subset_vars: "L c X \<subseteq> rvars c \<union> X"
+proof (induction c arbitrary: X)
+case SKIP
+  then show ?case by auto
+next
+  case (Assign x1 x2)
+  then show ?case by auto
+next
+  case (Seq c1 c2)
+  then show ?case by auto
+next
+  case (If x1 c1 c2)
+  then show ?case by auto
+next
+  case (While x1 c)
+(*
+1. \<And>x1 c X. (\<And>X. L c X \<subseteq> rvars c \<union> X) \<Longrightarrow> L (WHILE x1 DO c) X \<subseteq> rvars (WHILE x1 DO c) \<union> X
+*)
+  then have "lfp (\<lambda>Y. vars x1 \<union> X \<union> L c Y) \<subseteq> vars x1 \<union> rvars c \<union> X" 
+    by (metis Un_subset_iff lfp_lowerbound sup.cobounded2 sup.left_idem sup_assoc sup_left_commute)
+  show ?case 
+    by (simp add: \<open>lfp (\<lambda>Y. vars x1 \<union> X \<union> L c Y) \<subseteq> vars x1 \<union> rvars c \<union> X\<close>)
+qed
+
+
+
+subsubsection "Limiting the number of iterations"
+
+text\<open>The final parameter is the default value:\<close>
+
+fun iter :: "('a \<Rightarrow> 'a) \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a" where
+"iter f 0 p d = d" |
+"iter f (Suc n) p d = (if f p = p then p else iter f n (f p) d)"
+
+(*Lemma 10.32.*)
+lemma lfp_subset_iter:
+  "\<lbrakk> mono f; !!X. f X \<subseteq> f' X; lfp f \<subseteq> D \<rbrakk> \<Longrightarrow> lfp f \<subseteq> iter f' n A D"
+proof(induction n arbitrary: A)
+case 0
+  then show ?case 
+    by simp
+next
+  case (Suc n)
+  then show ?case 
+    by (metis ConcreteSemantics10_4_Live_True.iter.simps(2) lfp_lowerbound)
+qed
+
+
 
 end
