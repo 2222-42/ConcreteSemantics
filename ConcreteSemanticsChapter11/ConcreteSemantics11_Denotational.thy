@@ -116,5 +116,15 @@ corollary equiv_c_iff_equal_D: "(c1 \<sim> c2) \<longleftrightarrow> D c1 = D c2
   apply(simp add: set_eq_iff)
   done
 
+subsection "Continuity"
+
+definition chain :: "(nat \<Rightarrow> 'a set) \<Rightarrow> bool" where
+"chain S = (\<forall>i. S i \<subseteq> S(Suc i))"
+
+lemma chain_total: "chain S \<Longrightarrow> S i \<le> S j \<or> S j \<le> S i"
+  by (meson ConcreteSemantics11_Denotational.chain_def le_cases lift_Suc_mono_le)
+
+definition cont:: "('a set \<Rightarrow> 'b set) \<Rightarrow> bool" where
+"cont f = (\<forall> S. chain S \<longrightarrow> f (\<Union> n. S n) = (\<Union> n. f (S n)))"
 
 end
