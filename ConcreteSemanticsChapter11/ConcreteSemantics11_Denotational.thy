@@ -106,4 +106,15 @@ next
     using D.simps(5) While.prems lfp_lowerbound by blast
 qed
 
+(*Theorem 11.6 (Equivalence of denotational and big-step semantics).*)
+theorem denotational_is_big_step: "(s, t) \<in> D c = (c, s) \<Rightarrow> t"
+  using Big_step_if_D D_if_big_step by blast
+
+(*Corollary 11.7.*)
+corollary equiv_c_iff_equal_D: "(c1 \<sim> c2) \<longleftrightarrow> D c1 = D c2"
+  apply(simp add: denotational_is_big_step[symmetric])
+  apply(simp add: set_eq_iff)
+  done
+
+
 end
