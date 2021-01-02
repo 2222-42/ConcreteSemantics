@@ -144,4 +144,57 @@ proof
     by (simp add: subset_Un_eq)
 qed
 
+lemma chain_iterates: fixes f :: "'a set \<Rightarrow> 'a set"
+  assumes "mono f" shows "chain(\<lambda>n. (f^^n) {})"
+proof-
+  have "(f ^^ n ) {} \<subseteq> (f ^^ (Suc n)) {} " for n 
+    using assms funpow_decreasing le_SucI by blast
+  thus ?thesis 
+    by (simp add: ConcreteSemantics11_Denotational.chain_def)
+qed
+
+(*Theorem 11.12 (Kleene fixpoint theorem).*)
+theorem lfp_if_cont:
+  assumes "cont f" shows "lfp f = (UN n. (f^^n) {})" (is "_ = ?U")
+proof
+(* 
+ 1. lfp f \<subseteq> (\<Union>n. (f ^^ n) {})
+ 2. (\<Union>n. (f ^^ n) {}) \<subseteq> lfp f
+*)
+  have "mono f" 
+    by (simp add: assms mono_if_cont)
+  then have mono: "(f ^^ n) {} \<subseteq> (f ^^ Suc n) {}" for n 
+    using funpow_decreasing order.strict_implies_order by blast
+  show "lfp f \<subseteq> ?U" 
+  proof (rule lfp_lowerbound)
+    have "f ?U = (\<Union>n. (f ^^ (Suc n)) {})" 
+      using chain_iterates[OF mono_if_cont[OF assms]] assms
+      by(simp add: cont_def)
+    also have "\<dots> = (f ^^ 0) {} \<union> (\<Union>n. (f ^^ (Suc n)) {})" 
+      by simp
+    also have "\<dots> = ?U" using mono by auto (metis funpow_simps_right(2) funpow_swap1 o_apply)
+    finally show "f ?U \<subseteq> ?U" 
+      by simp
+  qed
+next
+  have "(f^^n){} \<subseteq> p" if "f p \<subseteq> p" for n p
+(*  have "(f ^^ n) {} \<subseteq> lfp f" for n *)
+(*    using Kleene_iter_lpfp assms lfp_unfold mono_if_cont by blast*)
+(*Q: is it good to use Kleene_iter_lpfp ?*)
+  proof (induction n)
+    case 0
+    then show ?case 
+      by simp
+  next
+    case (Suc n)
+    from monoD[OF mono_if_cont[OF assms] Suc] \<open>f p \<subseteq> p\<close>
+    show ?case 
+      by auto
+(*    using Kleene_iter_lpfp assms mono_if_cont that by blast*)
+(*    by (meson Kleene_iter_lpfp assms lfp_greatest mono_if_cont)*)
+qed
+  then show "?U \<subseteq> lfp f"  by(auto simp: lfp_def)
+(*    by (simp add: UN_least \<open>\<And>n. (f ^^ n) {} \<subseteq> lfp f\<close>)*)
+qed
+
 end
