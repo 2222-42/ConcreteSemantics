@@ -121,10 +121,27 @@ subsection "Continuity"
 definition chain :: "(nat \<Rightarrow> 'a set) \<Rightarrow> bool" where
 "chain S = (\<forall>i. S i \<subseteq> S(Suc i))"
 
+(*Lemma 11.10.*)
 lemma chain_total: "chain S \<Longrightarrow> S i \<le> S j \<or> S j \<le> S i"
   by (meson ConcreteSemantics11_Denotational.chain_def le_cases lift_Suc_mono_le)
 
 definition cont:: "('a set \<Rightarrow> 'b set) \<Rightarrow> bool" where
 "cont f = (\<forall> S. chain S \<longrightarrow> f (\<Union> n. S n) = (\<Union> n. f (S n)))"
+
+(*Lemma 11.11.*)
+lemma mono_if_cont: fixes f :: "'a set \<Rightarrow> 'b set"
+  assumes "cont f" shows "mono f"
+proof
+  fix a b :: "'a set" assume "a \<subseteq> b"
+  let ?S = "\<lambda>i::nat. if i = 0 then a else b"
+  have "chain ?S" using \<open>a \<subseteq> b\<close> 
+    by (simp add: ConcreteSemantics11_Denotational.chain_def)
+  then have "f (\<Union>n. ?S n) = (\<Union>n. f(?S n))" 
+    by (metis assms cont_def)
+  moreover have "(\<Union>n. ?S n) = b" using \<open>a \<subseteq> b\<close> by auto
+  moreover have "(\<Union>n. f(?S n)) = f a \<union> f b" by (auto split: if_splits)
+  ultimately show "f a \<subseteq> f b" 
+    by (simp add: subset_Un_eq)
+qed
 
 end
