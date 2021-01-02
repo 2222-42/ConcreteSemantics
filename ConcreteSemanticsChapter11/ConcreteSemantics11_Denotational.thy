@@ -180,7 +180,7 @@ next
   have "(f^^n){} \<subseteq> p" if "f p \<subseteq> p" for n p
 (*  have "(f ^^ n) {} \<subseteq> lfp f" for n *)
 (*    using Kleene_iter_lpfp assms lfp_unfold mono_if_cont by blast*)
-(*Q: is it good to use Kleene_iter_lpfp ?*)
+(*Q: is it good to use Kleene_iter_lpfp ? \<rightarrow> Not good.*)
   proof (induction n)
     case 0
     then show ?case 
@@ -196,5 +196,12 @@ qed
   then show "?U \<subseteq> lfp f"  by(auto simp: lfp_def)
 (*    by (simp add: UN_least \<open>\<And>n. (f ^^ n) {} \<subseteq> lfp f\<close>)*)
 qed
+
+(*Lemma 11.13.*)
+lemma cont_W: "cont(W b r)"
+  apply(simp add: cont_def)
+  apply(simp add: W_def)
+  apply(auto)
+  done
 
 end
