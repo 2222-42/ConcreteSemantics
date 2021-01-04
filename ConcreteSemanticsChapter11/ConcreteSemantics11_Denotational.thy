@@ -204,4 +204,46 @@ lemma cont_W: "cont(W b r)"
   apply(auto)
   done
 
+subsection\<open>The denotational semantics is deterministic\<close>
+
+lemma single_valued_UN_chain:
+  assumes "chain S" "(\<And>n. single_valued (S n))"
+  shows "single_valued(UN n. S n)"
+proof(auto simp: single_valued_def)
+(*  \<And>x y xa z xb. (x, y) \<in> S xa \<Longrightarrow> (x, z) \<in> S xb \<Longrightarrow> y = z *)
+  fix m n x y z  assume "(x, y) \<in> S m " "(x, z) \<in> S n"
+  show "y = z" 
+    by (meson \<open>(x, y) \<in> S m\<close> \<open>(x, z) \<in> S n\<close> assms(1) assms(2) chain_total single_valuedD subsetD)
+(*    by (meson \<open>(x, y) \<in> S m\<close> \<open>(x, z) \<in> S n\<close> assms(1) assms(2) chain_total single_valued_def subset_iff)*)
+(* There also exists an proof using `chain_total`*)
+qed
+
+(*Lemma 11.15.*)
+lemma single_valued_lfp: fixes f :: "com_den \<Rightarrow> com_den"
+assumes "cont f" "\<And>r. single_valued r \<Longrightarrow> single_valued (f r)"
+shows "single_valued(lfp f)"
+  unfolding lfp_if_cont[OF assms(1)]
+proof(rule single_valued_UN_chain)
+  from chain_iterates[OF mono_if_cont]
+  show "chain (\<lambda>n. (f ^^ n) {})" 
+    by (simp add: \<open>\<And>f. cont f \<Longrightarrow> chain (\<lambda>n. (f ^^ n) {})\<close> assms(1))
+next
+  fix n show " single_valued ((f ^^ n) {})" 
+  proof(induction n)
+    case 0
+    then show ?case 
+      by simp
+  next
+    case (Suc n)
+    then show ?case by (auto simp: assms(2) )
+  qed
+qed
+(*
+ 1. \<forall>x y. (\<exists>xa. (x, y) \<in> (f ^^ xa) {}) \<longrightarrow> (\<forall>z. (\<exists>xa. (x, z) \<in> (f ^^ xa) {}) \<longrightarrow> y = z)
+*)
+  (*
+apply(simp add: single_valued_def)
+apply(simp add: lfp_def)
+  sledgehammer*)
+
 end
