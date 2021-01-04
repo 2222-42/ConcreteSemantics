@@ -246,4 +246,39 @@ apply(simp add: single_valued_def)
 apply(simp add: lfp_def)
   sledgehammer*)
 
+(*Lemma 11.16.*)
+lemma single_valued_D: "single_valued (D c)"
+proof(induction c)
+  case SKIP
+  then show ?case 
+    by simp
+next
+  case (Assign x1 x2)
+  then show ?case by (auto simp: single_valued_def)
+next
+  case (Seq c1 c2)
+  then show ?case 
+    by (simp add: single_valued_relcomp)
+next
+  case (If x1 c1 c2)
+  then show ?case by (auto simp: single_valued_def)
+next
+  case (While x1 c)
+(*\<And>x1 c. single_valued (D c) \<Longrightarrow> single_valued (D (WHILE x1 DO c))*)
+  let ?f = "W (bval x1) (D c)"
+  have "single_valued (lfp ?f)"
+  proof (rule single_valued_lfp[OF cont_W])
+(*
+ 1. cont (W (bval x1) (D c))
+ 2. \<And>r. single_valued r \<Longrightarrow> single_valued (W (bval x1) (D c) r)
+*)
+    fix r show "single_valued r \<Longrightarrow> single_valued (W (bval x1) (D c) r)" using While.IH 
+       by(force simp: single_valued_def W_def)
+  qed
+  then show ?case 
+    by simp
+(*    by (meson big_step_determ denotational_is_big_step single_valuedI)*)
+qed
+
+
 end
