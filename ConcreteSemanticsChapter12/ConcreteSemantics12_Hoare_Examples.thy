@@ -24,9 +24,12 @@ lemma while_sum: "(wsum, s) \<Rightarrow> t \<Longrightarrow> t ''y'' = s ''y'' 
    apply(auto)
   done
 
-
-lemma sum_via_bigste: 
+lemma sum_via_bigstep: 
   assumes "(''y''::= N 0;; wsum, s) \<Rightarrow> t"
   shows " t ''y'' = sum (s ''x'')"
-  sorry
+proof -
+  from assms have "(wsum, s(''y'' := 0)) \<Rightarrow> t" by auto
+  then show ?thesis 
+    using while_sum by fastforce
+qed
 end
