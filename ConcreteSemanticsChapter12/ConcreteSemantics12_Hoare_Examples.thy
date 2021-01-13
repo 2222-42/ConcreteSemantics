@@ -3,7 +3,16 @@ theory ConcreteSemantics12_Hoare_Examples
 begin
 
 fun sum:: "int \<Rightarrow> int" where
-"sum i = (if i \<le> 0 then 0 else sum (i - 1) + 1)"
+"sum i = (if i \<le> 0 then 0 else sum (i - 1) + i)"
+
+text\<open>To prove while_sum, it is needed to prove the following lemma and declare sum.simps\<close>
+lemma sum_simps[simp]: 
+"0 < i \<Longrightarrow> sum i = sum (i - 1) + i"
+"i \<le> 0 \<Longrightarrow> sum i = 0"
+   apply(simp_all)
+  done
+
+declare sum.simps[simp del]
 
 abbreviation "wsum ==
   WHILE Less (N 0) (V ''x'') DO 
@@ -11,7 +20,10 @@ abbreviation "wsum ==
 "
 
 lemma while_sum: "(wsum, s) \<Rightarrow> t \<Longrightarrow> t ''y'' = s ''y'' + sum (s ''x'')"
-  sorry
+  apply(induction wsum s t rule: big_step_induct)
+   apply(auto)
+  done
+
 
 lemma sum_via_bigste: 
   assumes "(''y''::= N 0;; wsum, s) \<Rightarrow> t"
