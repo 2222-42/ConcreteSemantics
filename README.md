@@ -88,6 +88,11 @@ blast:
 - either succeeds or fails.
   - 失敗するか成功するかのいずれかである
 
+simpについて:
+- simp はrewrite rulesを宣言する。 
+  - TheoryやProofのContextにおいてsimpsetからそれらを追加(`add`)もしくは削除(`del`)することによって、
+  - Rewrite rules はなんらかの等式の形を表現している定理である。
+
 #### Methodの例について
 
 ```
