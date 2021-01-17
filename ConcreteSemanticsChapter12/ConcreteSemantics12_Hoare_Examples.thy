@@ -32,4 +32,19 @@ proof -
   then show ?thesis 
     using while_sum by fastforce
 qed
+
+lemma "\<turnstile> {\<lambda>s. s ''x'' = n} ''y'' ::= N 0;; wsum {\<lambda>s. s ''y'' = sum n}"
+  apply(rule Seq)
+   prefer 2
+   apply(rule While' [where P = "\<lambda>s. s ''y'' = sum n - sum(s ''x'')"])
+    apply(rule Seq)
+     prefer 2
+     apply(rule Assign)
+    apply(rule Assign')
+    apply(simp_all)
+  apply(rule Assign')
+  apply(simp)
+  done
+
+
 end
