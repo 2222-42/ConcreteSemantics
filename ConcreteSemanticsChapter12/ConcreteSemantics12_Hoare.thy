@@ -86,6 +86,25 @@ next
     by (simp add: asubstitution)
   finally show ?case 
     using bval.simps(4) by blast
-qed
+qed 
 
+lemma strengthen_pre: "\<lbrakk>\<forall> s. P' s \<longrightarrow> P s; \<turnstile> {P} c {Q} \<rbrakk> \<Longrightarrow> \<turnstile> {P'} c {Q}"
+  by (simp add: conseq)
+
+lemma weaken_post: "\<lbrakk> \<turnstile> {P} c {Q};  \<forall> s. Q s \<longrightarrow> Q' s\<rbrakk> \<Longrightarrow> \<turnstile> {P} c {Q'}"
+  using conseq by blast
+
+(* Derived Rules*)
+
+lemma Assign': "\<forall>s. P s \<longrightarrow> Q(s[a/x]) \<Longrightarrow> \<turnstile> {P} x ::= a {Q}"
+  by (simp add: strengthen_pre)
+(* by (simp add: strengthen_pre[OF _ Assign]) *)
+
+lemma While': "\<lbrakk>\<turnstile> {\<lambda>s. P s \<and> bval b s} c {P}; \<forall> s. P s \<and> \<not> bval b s \<longrightarrow> Q s\<rbrakk> \<Longrightarrow> \<turnstile> {P} WHILE b DO c {Q}"
+  using While conseq by blast
+
+lemma While'':
+assumes "\<turnstile> {\<lambda>s. P s \<and> bval b s} c {P}" and "\<forall>s. P s \<and> \<not> bval b s \<longrightarrow> Q s"
+shows "\<turnstile> {P} WHILE b DO c {Q}"
+  by(rule weaken_post[OF While[OF assms(1)] assms(2)])
 end
