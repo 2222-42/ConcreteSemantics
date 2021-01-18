@@ -23,7 +23,7 @@ If: "\<lbrakk>\<turnstile> {\<lambda>s. P s \<and> bval b s} c\<^sub>1 {Q}; \<tu
 While: "\<turnstile> {\<lambda>s. P s \<and> bval b s} c\<^sub>1 {P} \<Longrightarrow> \<turnstile> {P} WHILE b DO  c {\<lambda>s. P s \<and> \<not> bval b s}" |
 conseq: "\<lbrakk> \<forall>s. P' s \<longrightarrow> P s; \<turnstile> {P} c {Q}; \<forall> s. Q s \<longrightarrow> Q' s \<rbrakk> \<Longrightarrow> \<turnstile> {P'} c {Q'}"
 
-lemmas [simp] = hoare.Skip hoare.Assign hoare.Seq hoare.If 
+lemmas [simp] = hoare.Skip hoare.Assign hoare.Seq If
 
 lemmas [intro!] = hoare.Skip hoare.Assign hoare.Seq hoare.If
 
@@ -106,5 +106,7 @@ lemma While': "\<lbrakk>\<turnstile> {\<lambda>s. P s \<and> bval b s} c {P}; \<
 lemma While'':
 assumes "\<turnstile> {\<lambda>s. P s \<and> bval b s} c {P}" and "\<forall>s. P s \<and> \<not> bval b s \<longrightarrow> Q s"
 shows "\<turnstile> {P} WHILE b DO c {Q}"
-  by(rule weaken_post[OF While[OF assms(1)] assms(2)])
+by(rule weaken_post[OF While[OF assms(1)] assms(2)])
+
+
 end

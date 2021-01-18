@@ -41,7 +41,8 @@ lemma "\<turnstile> {\<lambda>s. s ''x'' = n} ''y'' ::= N 0;; wsum {\<lambda>s. 
      prefer 2
      apply(rule Assign)
     apply(rule Assign')
-    apply(simp_all)
+    apply(simp)
+   apply(simp)
   apply(rule Assign')
   apply(simp)
   done
