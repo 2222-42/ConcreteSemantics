@@ -51,6 +51,41 @@ fun bsubst :: "bexp \<Rightarrow> aexp \<Rightarrow> vname \<Rightarrow> bexp" w
 "bval (Less a\<^sub>1 a\<^sub>2) s = (aval a\<^sub>1 s < aval a\<^sub>2 s)"
 *)
 
+lemma asubstitution: "aval (asubst a b x) s = aval a (s[b/x])"
+proof(induction a)
+  case (N x)
+  then show ?case by simp
+next
+  case (V x)
+  then show ?case by simp
+next
+  case (Plus a1 a2)
+  then show ?case by simp
+qed
 
+(* Exercise 12.2. *)
+(* Lemma 12.1 (Substitution lemma). *)
+lemma bsubstitution: "bval (bsubst b a x) s = bval b (s[a/x])"
+proof(induction b)
+  case (Bc x)
+  then show ?case 
+    by simp
+next
+  case (Not b)
+  then show ?case by simp
+next
+  case (And b1 b2)
+  then show ?case by simp
+next
+  case (Less x1a x2a)
+(* \<And>x1a x2a. bval (bsubst (Less x1a x2a) a x) s = bval (Less x1a x2a) (s[a/x])*)
+  then have "bval (bsubst (Less x1a x2a) a x) s = bval (Less (asubst x1a a x) (asubst x2a a x)) s" by simp
+(*"bval (Less a\<^sub>1 a\<^sub>2) s = (aval a\<^sub>1 s < aval a\<^sub>2 s)"*)
+  also have "\<dots> = (aval (asubst x1a a x) s < aval (asubst x2a a x) s)" by simp
+  also have "\<dots> = (aval x1a (s[a/x]) < aval x2a (s[a/x]))" 
+    by (simp add: asubstitution)
+  finally show ?case 
+    using bval.simps(4) by blast
+qed
 
 end
