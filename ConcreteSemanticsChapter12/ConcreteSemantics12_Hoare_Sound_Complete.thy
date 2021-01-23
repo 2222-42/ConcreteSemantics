@@ -6,6 +6,7 @@ subsection \<open>Soundness and Completeness\<close>
 
 subsubsection "Soundness"
 
+(* Lemma 12.2 (Soundness of \<turnstile> w.r.t. \<Turnstile>. *)
 lemma hoare_sound: "\<turnstile> {P}c{Q}  \<Longrightarrow>  \<Turnstile> {P}c{Q}"
 proof(induction rule: hoare.induct)
 case (Skip P)
@@ -86,5 +87,58 @@ lemma wp_While_False[simp]: "\<not> bval b s \<Longrightarrow> wp (WHILE b DO c)
 (*    apply(auto simp: wp_def)
   done*)
   by (auto simp: wp_While_If)
+
+subsubsection "Completeness"
+
+(* Lemma 12.4. *)
+lemma wp_is_pre: "\<turnstile> {wp c Q} c {Q}"
+proof(induction c arbitrary: Q)
+case SKIP
+  then show ?case 
+    by simp
+next
+  case (Assign x1 x2)
+  then show ?case by simp
+next
+  case (Seq c1 c2)
+  then show ?case 
+    by auto
+next
+  case (If x1 c1 c2)
+(*
+ 1. \<And>x1 c1 c2 Q. (\<And>Q. \<turnstile> {wp c1 Q} c1 {Q}) \<Longrightarrow> (\<And>Q. \<turnstile> {wp c2 Q} c2 {Q}) \<Longrightarrow> \<turnstile> {wp (IF x1 THEN c1 ELSE c2) Q} IF x1 THEN c1 ELSE c2 {Q}
+*)
+(*
+conseq: "\<lbrakk> \<forall>s. P' s \<longrightarrow> P s;  \<turnstile> {P} c {Q};  \<forall>s. Q s \<longrightarrow> Q' s \<rbrakk>
+        \<Longrightarrow> \<turnstile> {P'} c {Q'}"
+*)
+  then show ?case by (auto intro: conseq)
+next
+  case (While b c)
+(*
+ 1. \<And>x1 c Q. (\<And>Q. \<turnstile> {wp c Q} c {Q}) \<Longrightarrow> \<turnstile> {wp (WHILE x1 DO c) Q} WHILE x1 DO c {Q}
+*)
+  let ?w = "WHILE b DO c"
+  show "\<turnstile> {wp ?w Q} ?w {Q}" 
+  proof(rule While')
+(*
+lemma While':
+assumes "\<turnstile> {\<lambda>s. P s \<and> bval b s} c {P}" and "\<forall>s. P s \<and> \<not> bval b s \<longrightarrow> Q s"
+shows "\<turnstile> {P} WHILE b DO c {Q}"
+by(rule weaken_post[OF While[OF assms(1)] assms(2)])
+*)
+    show "\<turnstile> {\<lambda>s. wp ?w Q s \<and>  bval b s} c {wp ?w Q}" 
+      by (smt While.IH strengthen_pre wp_Seq wp_While_True)
+(*
+    proof(rule strengthen_pre[OF _ While.IH])
+      show "\<forall>s. wp ?w Q s \<and> bval b s \<longrightarrow> wp c (wp ?w Q) s" by auto
+    qed
+*)
+    show "\<forall>s. wp ?w Q s \<and> \<not> bval b s \<longrightarrow> Q s" 
+      by auto
+  qed
+qed
+
+
 
 end
