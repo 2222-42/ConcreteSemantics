@@ -139,6 +139,18 @@ by(rule weaken_post[OF While[OF assms(1)] assms(2)])
   qed
 qed
 
+(*Theorem 12.5 (Completeness of \<turnstile> w.r.t. \<Turnstile>*)
+lemma hoare_complete: assumes "\<Turnstile> {P}c{Q}" shows "\<turnstile> {P}c{Q}"
+proof(rule strengthen_pre)
+  show "\<forall>s. P s \<longrightarrow> wp c Q s" 
+    using assms hoare_valid_def wp_def by auto
+  show "\<turnstile> {wp c Q} c {Q}" 
+    by (simp add: wp_is_pre)
+qed
+
+(* Corollary 12.6. *)
+corollary hoare_sound_complete: "\<turnstile> {P}c{Q} \<longleftrightarrow> \<Turnstile> {P}c{Q}"
+by (metis hoare_complete hoare_sound)
 
 
 end
