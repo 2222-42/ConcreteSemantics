@@ -57,7 +57,38 @@ subsubsection "Soundness"
 
 (*Lemma 12.9*)
 lemma vc_sound: "vc C Q \<Longrightarrow> \<turnstile> {pre C Q} strip C {Q}"
-  sorry
+proof(induction C arbitrary: Q)
+case Askip
+  then show ?case 
+    by simp
+next
+  case (Aassign x1 x2)
+  then show ?case by simp
+next
+  case (Aseq C1 C2)
+  then show ?case 
+    by auto
+next
+  case (Aif x1 C1 C2)
+  then show ?case 
+    by (auto intro: hoare.conseq)
+(*    by (smt If pre.simps(4) strengthen_pre strip.simps(4) vc.simps(4))*)
+next
+  case (Awhile I b C)
+  show ?case 
+  proof(simp, rule While')
+    have vc: "vc C I" and IQ: "\<forall>s. I s \<and> \<not> bval b s \<longrightarrow> Q s" and 
+         pre: "\<forall>s. I s \<and> bval b s \<longrightarrow> pre C I s" 
+      using Awhile.prems by auto
+    show " \<turnstile> {\<lambda>s. I s \<and> bval b s} strip C {I}" 
+      using Awhile.IH pre strengthen_pre vc by auto
+    show "\<forall> s. I s \<and> \<not> bval b s \<longrightarrow> Q s" 
+      using Awhile.prems by auto
+  qed
+(*
+  then show ?case 
+    by (smt While' pre.simps(5) strengthen_pre strip.simps(5) vc.simps(5))*)
+qed
 
 (*Corollary 12.8.*)
 corollary vc_sound':
