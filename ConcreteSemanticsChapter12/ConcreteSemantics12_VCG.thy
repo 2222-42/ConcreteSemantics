@@ -62,6 +62,6 @@ lemma vc_sound: "vc C Q \<Longrightarrow> \<turnstile> {pre C Q} strip C {Q}"
 (*Corollary 12.8.*)
 corollary vc_sound':
   "\<lbrakk> vc C Q; \<forall>s. P s \<longrightarrow> pre C Q s \<rbrakk> \<Longrightarrow> \<turnstile> {P} strip C {Q}"
-  sorry
+  by (simp add: strengthen_pre vc_sound)
 
 end
