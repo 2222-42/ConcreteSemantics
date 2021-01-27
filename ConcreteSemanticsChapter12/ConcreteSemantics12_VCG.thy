@@ -43,5 +43,25 @@ fun vc :: "acom \<Rightarrow> assn \<Rightarrow> bool" where
         (I s \<and> \<not> bval b s \<longrightarrow> Q s)) \<and>
     vc C I)"
 
+text\<open>Strip annotations:\<close>
+
+fun strip :: "acom \<Rightarrow> com" where
+"strip SKIP = SKIP" |
+"strip (x ::= a) = (x ::= a)" |
+"strip (C\<^sub>1;; C\<^sub>2) = (strip C\<^sub>1;; strip C\<^sub>2)" |
+"strip (IF b THEN C\<^sub>1 ELSE C\<^sub>2) = (IF b THEN strip C\<^sub>1 ELSE strip C\<^sub>2)" |
+"strip ({_} WHILE b DO C) = (WHILE b DO strip C)"
+
+subsubsection "Soundness"
+
+
+(*Lemma 12.9*)
+lemma vc_sound: "vc C Q \<Longrightarrow> \<turnstile> {pre C Q} strip C {Q}"
+  sorry
+
+(*Corollary 12.8.*)
+corollary vc_sound':
+  "\<lbrakk> vc C Q; \<forall>s. P s \<longrightarrow> pre C Q s \<rbrakk> \<Longrightarrow> \<turnstile> {P} strip C {Q}"
+  sorry
 
 end
