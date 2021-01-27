@@ -93,6 +93,105 @@ qed
 (*Corollary 12.8.*)
 corollary vc_sound':
   "\<lbrakk> vc C Q; \<forall>s. P s \<longrightarrow> pre C Q s \<rbrakk> \<Longrightarrow> \<turnstile> {P} strip C {Q}"
-  by (simp add: strengthen_pre vc_sound)
+  by (simp add: strengthen_pre vc_sound) 
 
+subsubsection "Completeness"
+
+lemma pre_mono:
+  "\<forall>s. P s \<longrightarrow> P' s \<Longrightarrow> pre C P s \<Longrightarrow> pre C P' s"
+proof(induction C arbitrary: P P' s)
+case Askip
+then show ?case  by simp
+next
+  case (Aassign x1 x2)
+  then show ?case  
+    by auto
+next
+  case (Aseq C1 C2)
+  then show ?case  
+    by (smt pre.simps(3))
+next
+  case (Aif x1 C1 C2)
+  then show ?case  by simp
+next
+  case (Awhile x1 x2 C)
+  then show ?case by simp
+qed
+
+lemma vc_mono:
+  "\<forall>s. P s \<longrightarrow> P' s \<Longrightarrow> vc C P \<Longrightarrow> vc C P'"
+proof(induction C arbitrary: P P' )
+case Askip
+  then show ?case by simp
+next
+  case (Aassign x1 x2)
+  then show ?case by simp
+next
+  case (Aseq C1 C2)
+  then show ?case 
+    by (metis pre_mono vc.simps(3))
+next
+  case (Aif x1 C1 C2)
+  then show ?case by simp
+next
+  case (Awhile x1 x2 C)
+  then show ?case by simp
+qed
+
+(*Lemma 12.11*)
+lemma vc_complete:
+ "\<turnstile> {P}c{Q} \<Longrightarrow> \<exists>C. strip C = c \<and> vc C Q \<and> (\<forall>s. P s \<longrightarrow> pre C Q s)"
+  (is "_ \<Longrightarrow> \<exists>C. ?G P c Q C")
+proof (induction rule: hoare.induct)
+  case (Skip P)
+  then show ?case 
+    using strip.simps(1) by fastforce
+next
+  case (Assign P a x)
+  then show ?case using strip.simps(2) by fastforce
+next
+  case (Seq P c\<^sub>1 Q c\<^sub>2 R)
+  obtain C1 where ih1: "?G P c\<^sub>1 Q C1" 
+    using Seq.IH(1) by auto
+  obtain C2 where ih2: "?G Q c\<^sub>2 R C2" 
+    using Seq.IH(2) by auto
+  show ?case (is "\<exists>C. ?C C")
+  proof
+    show "?C(Aseq C1 C2)"
+      using ih1 ih2 by (fastforce elim!: pre_mono vc_mono)
+  qed
+  (*show ?case using ih1 ih2 
+     by (smt pre.simps(3) pre_mono strip.simps(3) vc.simps(3) vc_mono)*)
+next
+  case (If P b c\<^sub>1 Q c\<^sub>2)
+(*
+ 1. \<And>P b c\<^sub>1 Q c\<^sub>2.
+       \<turnstile> {\<lambda>s. P s \<and> bval b s} c\<^sub>1 {Q} \<Longrightarrow>
+       \<exists>C. strip C = c\<^sub>1 \<and> vc C Q \<and> (\<forall>s. P s \<and> bval b s \<longrightarrow> pre C Q s) \<Longrightarrow>
+       \<turnstile> {\<lambda>s. P s \<and> \<not> bval b s} c\<^sub>2 {Q} \<Longrightarrow> \<exists>C. strip C = c\<^sub>2 \<and> vc C Q \<and> (\<forall>s. P s \<and> \<not> bval b s \<longrightarrow> pre C Q s) \<Longrightarrow> \<exists>C. strip C = IF b THEN c\<^sub>1 ELSE c\<^sub>2 \<and> vc C Q \<and> (\<forall>s. P s \<longrightarrow> pre C Q s)
+*)
+  obtain C1 where ih1: "?G (\<lambda>s. P s \<and> bval b s) c\<^sub>1 Q C1" 
+    using If.IH(1) by auto
+  obtain C2 where ih2: "?G (\<lambda>s. P s \<and> \<not> bval b s) c\<^sub>2 Q C2" 
+    using If.IH(2) by auto
+  show ?case (is "\<exists>C. ?C C")
+  proof
+    show "?C(Aif b C1 C2)"
+      using ih1 ih2 by (fastforce elim!: pre_mono vc_mono)
+  qed
+next
+  case (While P b c)
+(*  \<And>P b c. \<turnstile> {\<lambda>s. P s \<and> bval b s} c {P} \<Longrightarrow> \<exists>C. strip C = c \<and> vc C P \<and> (\<forall>s. P s \<and> bval b s \<longrightarrow> pre C P s) \<Longrightarrow> \<exists>C. strip C = WHILE b DO c \<and> vc C (\<lambda>a. P a \<and> \<not> bval b a) \<and> (\<forall>s. P s \<longrightarrow> pre C (\<lambda>a. P a \<and> \<not> bval b a) s) *)
+  obtain C1 where ih1: "?G (\<lambda>s. P s \<and> bval b s) c P C1" sledgehammer
+    using While.IH by auto
+  show ?case (is "\<exists>C. ?C C")
+  proof
+    show "?C(Awhile P b C1)" 
+      by (simp add: ih1)
+  qed
+next
+  case (conseq P' P c Q Q')
+  then show ?case 
+    using pre_mono vc_mono by auto
+qed
 end
