@@ -6,6 +6,11 @@
 
 [Concrete Semantics](http://www.concrete-semantics.org/index.html)を読んでいる
 
+## usefull tools
+
+- `sledgehammer`
+- `find_theorems "_ /\ _ => _"`
+
 ## Memo
 
 ### the feature of definitions
