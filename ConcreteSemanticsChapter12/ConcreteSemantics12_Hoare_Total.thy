@@ -47,4 +47,59 @@ lemma While_fun:
    \<Longrightarrow> \<turnstile>\<^sub>t {P} WHILE b DO c {\<lambda>s. P s \<and> \<not>bval b s}"
   by (rule While[where T = "\<lambda> s n. n = f s", simplified])
 
+text\<open>The soundness theorem:\<close>
+
+(*Lemma 12.13 (Soundness of \<turnstile>\<^sub>t w.r.t. \<Turnstile>\<^sub>t.*)
+theorem hoaret_sound: "\<turnstile>\<^sub>t {P}c{Q}  \<Longrightarrow>  \<Turnstile>\<^sub>t {P}c{Q}"
+(*to simplify, we  unfold to induction on hoaret.induct *)
+(*
+The following two proof is not same.
+- proof( unfold hoare_tvalid_def, induction rule: hoaret.induct)
+- proof( induction rule: hoaret.induct, unfold hoare_tvalid_def)
+*)
+proof( unfold hoare_tvalid_def, induction rule: hoaret.induct)
+  case (Skip P)
+  then show ?case 
+    by auto
+next
+  case (Assign P a x)
+  then show ?case by auto
+next
+  case (Seq P\<^sub>1 c\<^sub>1 P\<^sub>2 c\<^sub>2 P\<^sub>3)
+  then show ?case 
+    by blast
+next
+  case (If P b c\<^sub>1 Q c\<^sub>2)
+  then show ?case by blast
+next
+  case (While P b T c)
+(*
+    \<turnstile>\<^sub>t {\<lambda>s. P s \<and> bval b s \<and> T s ?n} c {\<lambda>s. P s \<and> (\<exists>n'<?n. T s n')}
+*)
+  let ?w = "WHILE b DO c"
+  have "\<lbrakk>P s; T s n\<rbrakk> \<Longrightarrow> \<exists> t. (?w, s) \<Rightarrow> t \<and> P t \<and> \<not> bval b t" for s n 
+(*  proof (cases)
+    assume "bval b s"
+    assume "P s" "T s n"
+    then obtain s' t' where "(c, s) \<Rightarrow> s'" "P s'" "T s' n'" "n' < n" for n' sledgehammer
+
+    then show ?thesis sorry
+  next
+    assume "\<not> bval b s"
+    then have "(?w, s) \<Rightarrow> t" sledgehammer
+    then show ?thesis sledgehammer
+    qed*)
+  proof (induction n arbitrary: s rule: less_induct)
+    case (less x)                            
+    then show ?case 
+      by (metis While.IH WhileFalse WhileTrue)
+    qed
+  then show ?case 
+    by blast
+next
+  case (conseq P' P c Q Q')
+  then show ?case by blast
+qed
+
+
 end
